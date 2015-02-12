@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<launch>  
+  <arg name="namespace" default="/thor_mang"/>
+
+  <!-- load position controllers -->
+  <node name="position_controller_spawner" pkg="controller_manager" type="spawner" ns="$(arg namespace)" respawn="false" output="screen"
+    args="--stopped
+          r_shoulder_pitch_position_controller
+          l_shoulder_pitch_position_controller
+          r_shoulder_roll_position_controller
+          l_shoulder_roll_position_controller
+          r_shoulder_yaw_position_controller
+          l_shoulder_yaw_position_controller
+          r_elbow_position_controller
+          l_elbow_position_controller
+          r_wrist_yaw1_position_controller
+          l_wrist_yaw1_position_controller
+          r_wrist_roll_position_controller
+          l_wrist_roll_position_controller
+          r_wrist_yaw2_position_controller
+          l_wrist_yaw2_position_controller
+          r_hip_yaw_position_controller
+          l_hip_yaw_position_controller
+          r_hip_roll_position_controller
+          l_hip_roll_position_controller
+          r_hip_pitch_position_controller
+          l_hip_pitch_position_controller
+          r_knee_position_controller
+          l_knee_position_controller
+          r_ankle_pitch_position_controller
+          l_ankle_pitch_position_controller
+          r_ankle_roll_position_controller
+          l_ankle_roll_position_controller
+          waist_pan_position_controller
+          waist_tilt_position_controller
+          head_pan_position_controller
+          head_tilt_position_controller
+          waist_lidar_position_controller"/>
+</launch>
+

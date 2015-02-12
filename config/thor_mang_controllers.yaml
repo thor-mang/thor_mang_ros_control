@@ -1,0 +1,10 @@
+#thor:
+# footstep controller ---------------------------------------
+  footstep_preview_controller:
+    type: Thor/ThorMangFootstepPreviewController
+    execute_step_plan_topic: execute_step_plan
+
+  footstep_recursive_controller:
+    type: Thor/ThorMangFootstepRecursiveController
+    execute_step_plan_topic: execute_step_plan
+

@@ -1,0 +1,12 @@
+<library path="lib/libthor_mang_ros_control">
+  <class name="Thor/ThorMangFootstepPreviewController" type="Thor::ThorMangFootstepPreviewController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      ThorMangFootstepController, for interfacing with footstep planner and Robotis framework
+    </description>
+  </class>
+  <class name="Thor/ThorMangFootstepRecursiveController" type="Thor::ThorMangFootstepRecursiveController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      ThorMangFootstepController, for interfacing with footstep planner and Robotis framework
+    </description>
+  </class>
+</library>
