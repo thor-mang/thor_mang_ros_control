@@ -182,3 +182,44 @@
         goal: *goal_pos_constraint
         
     stop_trajectory_duration: 1.0   
+
+# Hands --------------------------------------------------
+ left_hand_traj_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - l_hand_thumb
+      - l_hand_index_finger
+      - l_hand_middle_finger
+      
+    constraints:
+      goal_time: *goal_time_constraint
+      stopped_velocity_tolerance: 1.0
+      l_hand_thumb:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint
+      l_hand_index_finger:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint
+      l_hand_middle_finger:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint
+
+ right_hand_traj_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - r_hand_thumb
+      - r_hand_index_finger
+      - r_hand_middle_finger
+      
+    constraints:
+      goal_time: *goal_time_constraint
+      stopped_velocity_tolerance: 1.0
+      r_hand_thumb:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint
+      r_hand_index_finger:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint
+      r_hand_middle_finger:
+        goal: *goal_pos_constraint
+        trajectory: *trajectory_pos_constraint   
