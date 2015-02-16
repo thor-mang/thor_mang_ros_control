@@ -8,7 +8,7 @@
     args="
 	l_hand_index_finger_position_controller
 	l_hand_middle_finger_position_controller
-	l_hand_thumb_position_controller/command
+	l_hand_thumb_position_controller
 	r_hand_index_finger_position_controller
 	r_hand_middle_finger_position_controller
 	r_hand_thumb_position_controller
