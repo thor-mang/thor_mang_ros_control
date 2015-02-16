@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<launch>  
+  <arg name="namespace" default="/thor_mang"/>
+
+  <!-- load position controllers -->
+  <node name="position_controller_spawner" pkg="controller_manager" type="spawner" ns="$(arg namespace)" respawn="false" output="screen"
+    args="
+	l_hand_index_finger_position_controller
+	l_hand_middle_finger_position_controller
+	l_hand_thumb_position_controller/command
+	r_hand_index_finger_position_controller
+	r_hand_middle_finger_position_controller
+	r_hand_thumb_position_controller
+"/>
+</launch>
+
