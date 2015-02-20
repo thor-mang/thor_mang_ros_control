@@ -147,19 +147,17 @@ set(SOURCES
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+## Declare a cpp executable
+add_executable(thor_mang_ros_controller src/thor_mang_ros_controller.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
-## Declare a cpp executable
-add_executable(thor_mang_ros_controller src/thor_mang_ros_controller.cpp ${HEADERS})
-
 ## Specify libraries to link a library or executable target against
-# Build executable for real robot
-add_dependencies(thor_mang_ros_controller ${PROJECT_NAME}_generate_messages_cpp)
-target_link_libraries(thor_mang_ros_controller ${catkin_LIBRARIES} ${PROJECT_NAME} thor)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} thor)
+target_link_libraries(thor_mang_ros_controller ${PROJECT_NAME})
 
 #############
 ## Install ##
