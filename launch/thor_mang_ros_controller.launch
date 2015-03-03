@@ -4,6 +4,9 @@
   <!--Provide option to set namespace from outside-->
   <arg name="namespace" default="/thor_mang"/>
 
+    <!-- robot semantics for moveit -->
+  <param name="robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/thor_mang_robot.srdf" />
+
   <group ns="$(arg namespace)">
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_states.yaml" command="load" />
@@ -20,9 +23,6 @@
             imu_sensor_controller
             force_torque_sensor_controller
             waist_lidar_controller"/>
-
-    <!-- robot semantics for moveit -->
-  <param name="robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/thor_mang_robot.srdf" />
 
     <!-- Load trajectory controllers -->
     <include file="$(find thor_mang_ros_control)/launch/load_trajectory_controllers.launch">
