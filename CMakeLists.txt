@@ -28,7 +28,6 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   controller_manager
   dynamic_reconfigure
-  dynamixel_pro_driver
   vigir_force_torque_compensation_lib
   vigir_footstep_planning
   thor_mang_footstep_planner
@@ -116,7 +115,7 @@ ENDIF(EX_PLATFORM EQUAL 64)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES thor_mang_ros_control
-  CATKIN_DEPENDS roscpp rospy actionlib_msgs actionlib std_msgs hardware_interface controller_manager dynamic_reconfigure dynamixel_pro_driver vigir_force_torque_compensation_lib vigir_footstep_planning thor_mang_footstep_planner robot_transforms
+  CATKIN_DEPENDS roscpp rospy actionlib_msgs actionlib std_msgs hardware_interface controller_manager dynamic_reconfigure vigir_force_torque_compensation_lib vigir_footstep_planning thor_mang_footstep_planner robot_transforms
 #  DEPENDS system_lib
 )
 
