@@ -181,53 +181,45 @@
       waist_lidar:
         goal: *goal_pos_constraint
         
-    stop_trajectory_duration: 1.0   
+    stop_trajectory_duration: 1.0
 
 # Hands --------------------------------------------------
- left_hand_traj_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
+ #left_hand_traj_controller:
+    #type: "position_controllers/JointTrajectoryController"
+    #joints:
       #- l_hand_thumb
       #- l_hand_index_finger
-      - l_f0_j0
-      - l_f1_j0
-      - l_hand_middle_finger
-      
-    constraints:
-      goal_time: *goal_time_constraint
-      stopped_velocity_tolerance: 1.0
-      #l_hand_thumb:
-      l_f0_j0:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint
-      #l_hand_index_finger:
-      l_f1_j0:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint
-      l_hand_middle_finger:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint
+      #- l_hand_middle_finger
 
- right_hand_traj_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
+    #constraints:
+      #goal_time: *goal_time_constraint
+      #stopped_velocity_tolerance: 1.0
+      #l_hand_thumb:
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
+      #l_hand_index_finger:
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
+      #l_hand_middle_finger:
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
+
+ #right_hand_traj_controller:
+    #type: "position_controllers/JointTrajectoryController"
+    #joints:
       #- r_hand_thumb
       #- r_hand_index_finger
-      - r_f0_j0
-      - r_f1_j0
-      - r_hand_middle_finger
-      
-    constraints:
-      goal_time: *goal_time_constraint
-      stopped_velocity_tolerance: 1.0
+      #- r_hand_middle_finger
+
+    #constraints:
+      #goal_time: *goal_time_constraint
+      #stopped_velocity_tolerance: 1.0
       #r_hand_thumb:
-      r_f0_j0:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
       #r_hand_index_finger:
-      r_f1_j0:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint
-      r_hand_middle_finger:
-        goal: *goal_pos_constraint
-        trajectory: *trajectory_pos_constraint   
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
+      #r_hand_middle_finger:
+        #goal: *goal_pos_constraint
+        #trajectory: *trajectory_pos_constraint
