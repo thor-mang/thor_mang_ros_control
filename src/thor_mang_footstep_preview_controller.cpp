@@ -20,7 +20,7 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::ThorMangFootste
   nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
 
   // init action servers
-  execute_step_plan_as = vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::create(nh, execute_step_plan_topic, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)), true);
+  execute_step_plan_as = vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::create(nh, execute_step_plan_topic, true, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)));
   return true;
 }
 
