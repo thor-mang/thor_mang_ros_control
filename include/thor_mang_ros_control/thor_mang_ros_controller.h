@@ -1,5 +1,5 @@
 //=================================================================================================
-// Copyright (c) 2014, Alexander Stumpf, TU Darmstadt
+// Copyright (c) 2015, Alexander Stumpf, TU Darmstadt
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without

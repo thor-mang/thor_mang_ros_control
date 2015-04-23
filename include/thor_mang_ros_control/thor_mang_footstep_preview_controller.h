@@ -1,5 +1,5 @@
 //=================================================================================================
-// Copyright (c) 2013, Stefan Kohlbrecher, TU Darmstadt
+// Copyright (c) 2015, Alexander Stumpf, TU Darmstadt
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
