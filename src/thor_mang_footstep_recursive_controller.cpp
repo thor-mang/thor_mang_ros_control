@@ -212,9 +212,9 @@ void ThorMangFootstepRecursiveController::executeStepPlanAction(vigir_footstep_p
 
   ROS_INFO("Converting step plan...");
   std::vector<StepData> step_data_list;
-  thor_mang_footstep_planner::operator<<(step_data_list, goal->step_plan);
+  thor_mang_footstep_planning::operator<<(step_data_list, goal->step_plan);
 
-  if (thor_mang_footstep_planner::operator==(last_step_data_list, step_data_list))
+  if (thor_mang_footstep_planning::operator==(last_step_data_list, step_data_list))
   {
     ROS_INFO("Received same plan, reusing last pattern.");
   }
@@ -223,7 +223,7 @@ void ThorMangFootstepRecursiveController::executeStepPlanAction(vigir_footstep_p
     ROS_INFO("Spooling step plan...");
     for (std::vector<StepData>::iterator itr = step_data_list.begin(); itr != step_data_list.end(); itr++)
     {
-      ROS_INFO("%s", thor_mang_footstep_planner::toString(*itr).c_str());
+      ROS_INFO("%s", thor_mang_footstep_planning::toString(*itr).c_str());
       ROS_INFO("------------------------------------");
       RecursiveWalking::GetInstance()->AddStepData(*itr);
     }
@@ -237,7 +237,7 @@ void ThorMangFootstepRecursiveController::executeStepPlanAction(vigir_footstep_p
 
   //    for (std::vector<StepData>::const_iterator itr = step_data_vec.begin(); itr != step_data_vec.end(); itr++)
   //    {
-  //      ROS_INFO("%s", thor_mang_footstep_planner::toString(*itr).c_str());
+  //      ROS_INFO("%s", thor_mang_footstep_planning::toString(*itr).c_str());
   //      ROS_INFO("------------------------------------");
   //    }
 

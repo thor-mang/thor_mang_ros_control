@@ -240,7 +240,7 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
   ROS_INFO("Converting step plan...");
   std::vector<StepData> step_data_list;
   step_data_list.push_back(ref_step_data);
-  if (!thor_mang_footstep_planner::operator<<(step_data_list, step_plan))
+  if (!thor_mang_footstep_planning::operator<<(step_data_list, step_plan))
   {
     ROS_ERROR("Error during step plan conversion!");
     return;
@@ -254,7 +254,7 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
     /// Hack - Time scaling due to slow CPU
     step_data.TimeData.dAbsStepTime *= (MotionModule::TIME_UNIT / 1000.0) / system_control_unit_time_sec;
 
-    ROS_INFO("%s", thor_mang_footstep_planner::toString(step_data).c_str());
+    ROS_INFO("%s", thor_mang_footstep_planning::toString(step_data).c_str());
     ROS_INFO("------------------------------------");
 
     PreviewControlWalking::GetInstance()->AddStepData(step_data);
