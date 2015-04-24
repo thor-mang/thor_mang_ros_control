@@ -787,6 +787,7 @@ void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id) {
       ROS_ERROR_STREAM("Id: " << sensor_id << " is not a valid ft sensor id");
       return;
   }
+  ROS_INFO_STREAM("Starting reset of id " << sensor_id);
   has_ft_offsets[sensor_id] = false;
   num_ft_measurements[sensor_id] = 0;
 
@@ -811,7 +812,7 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
   compensate_force_torque(L_LEG);
 }
 
-void ThorMangHardwareInterface::compensate_force_torque(int ft_sensor_index) {
+void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_index) {
   FTCompensation::Vector6d ft_raw;
   FTCompensation::Vector6d ft_compensated;
 
@@ -841,6 +842,7 @@ void ThorMangHardwareInterface::compensate_force_torque(int ft_sensor_index) {
        has_ft_offsets[ft_sensor_index] = true;
        // set offset
        ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
+       ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset);
      }
    }
 }

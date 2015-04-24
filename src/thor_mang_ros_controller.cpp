@@ -85,6 +85,7 @@ void ThorMangRosControllerNode::setTorqueOn(std_msgs::BoolConstPtr enable)
 }
 
 void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id) {
+  ROS_INFO_STREAM("Resetting " << ThorMangHardwareInterface::ftSensorUIDs[sensor_id] << " ft sensor.");
   ThorMangHardwareInterface::Instance()->resetFtSensor(sensor_id);
 }
 
