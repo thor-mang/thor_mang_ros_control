@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <launch>
-  <!--Provide option to set namespace from outside-->
+  <!-- Provide option to set namespace from outside -->
   <arg name="namespace" default="/thor_mang"/>
 
-    <!-- robot semantics for moveit -->
+  <!-- robot semantics for moveit -->
   <param name="/robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/thor_mang_robot.srdf" />
 
   <group ns="$(arg namespace)">
