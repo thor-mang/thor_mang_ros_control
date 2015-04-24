@@ -838,7 +838,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
       force_torque_offset[ft_sensor_index] += ft_compensated;
 
      if (num_ft_measurements[ft_sensor_index]++ > 100) {
-       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] * (double) num_ft_measurements[ft_sensor_index]).eval();
+       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
        has_ft_offsets[ft_sensor_index] = true;
        // set offset
        ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
