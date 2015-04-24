@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!--Provide option to set namespace from outside-->
+  <arg name="namespace" default="/thor_mang"/>
+
+    <node launch-prefix="gdb --args" name="thor_mang_ros_controller" pkg="thor_mang_ros_control" type="thor_mang_ros_controller" output="screen" />
+</launch>
