@@ -311,7 +311,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
 
     // workaround for MX28 due to framework bug
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
     {
       int error;
       MotionManager::GetInstance()->WriteWord(m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value, &error);

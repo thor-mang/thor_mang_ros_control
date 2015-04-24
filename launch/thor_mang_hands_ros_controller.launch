@@ -5,7 +5,7 @@
   <arg name="namespace" default="/thor_mang"/>
 
     <!-- robot semantics for moveit -->
-  <param name="/robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/thor_mang_robot.srdf" />
+  <param name="/robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/$(optenv THOR_ROBOT_TYPE thor_mang)_robot.srdf" />
 
   <group ns="$(arg namespace)">
     <!-- Load joint controller configurations from YAML file to parameter server -->
