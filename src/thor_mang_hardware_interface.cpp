@@ -194,6 +194,10 @@ void ThorMangHardwareInterface::Initialize()
   }
   registerInterface(&force_torque_sensor_interface);
 
+  for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++) {
+      resetFtSensor(sensor_id);
+  }
+
   // footstep interface
   hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle", &getDynamixelMutex());
   footstep_interface.registerHandle(footsteps_handle);
@@ -718,17 +722,14 @@ void ThorMangHardwareInterface::initINS()
 
 void ThorMangHardwareInterface::InitForceTorque()
 {
-  force_raw[R_ARM][0] = force_raw[R_ARM][1] = force_raw[R_ARM][2] = 0.0;
-  torque_raw[R_ARM][0] = torque_raw[R_ARM][1] = torque_raw[R_ARM][2] = 0.0;
-
-  force_raw[L_ARM][0] = force_raw[L_ARM][1] = force_raw[L_ARM][2] = 0.0;
-  torque_raw[L_ARM][0] = torque_raw[L_ARM][1] = torque_raw[L_ARM][2] = 0.0;
-
-  force_raw[R_LEG][0] = force_raw[R_LEG][1] = force_raw[R_LEG][2] = 0.0;
-  torque_raw[R_LEG][0] = torque_raw[R_LEG][1] = torque_raw[R_LEG][2] = 0.0;
-
-  force_raw[L_LEG][0] = force_raw[L_LEG][1] = force_raw[L_LEG][2] = 0.0;
-  torque_raw[L_LEG][0] = torque_raw[L_LEG][1] = torque_raw[L_LEG][2] = 0.0;
+    // Set every sensor to 0
+    for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++) {
+       for (unsigned int axis_id = 0; axis_id < 3; axis_id++)
+       {
+         force_raw[sensor_id][axis_id] = 0.0;
+         torque_raw[sensor_id][axis_id] = 0.0;
+       }
+     }
 
   double Init_right_fx_N = 0,  Init_right_fy_N = 0,  Init_right_fz_N = 0;
   double Init_right_Tx_Nm = 0, Init_right_Ty_Nm = 0, Init_right_Tz_Nm = 0;
@@ -781,6 +782,19 @@ void ThorMangHardwareInterface::InitForceTorque()
                                                            Init_left_Tx_Nm , Init_left_Ty_Nm, Init_left_Tz_Nm);
 }
 
+void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id) {
+  if (sensor_id < 0 || sensor_id >= MAXIMUM_NUMBER_OF_FT_SENSORS) {
+      ROS_ERROR_STREAM("Id: " << sensor_id << " is not a valid ft sensor id");
+      return;
+  }
+  ROS_INFO_STREAM("Starting reset of id " << sensor_id);
+  has_ft_offsets[sensor_id] = false;
+  num_ft_measurements[sensor_id] = 0;
+
+  // Set offset to 0
+  force_torque_offset[sensor_id] = FTCompensation::Vector6d::Zero();
+}
+
 void ThorMangHardwareInterface::update_force_torque_compensation()
 {
   for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
@@ -798,8 +812,7 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
   compensate_force_torque(L_LEG);
 }
 
-void ThorMangHardwareInterface::compensate_force_torque(int ft_sensor_index)
-{
+void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_index) {
   FTCompensation::Vector6d ft_raw;
   FTCompensation::Vector6d ft_compensated;
 
@@ -818,5 +831,19 @@ void ThorMangHardwareInterface::compensate_force_torque(int ft_sensor_index)
   torque_compensated[ft_sensor_index][0] = ft_compensated[3];
   torque_compensated[ft_sensor_index][1] = ft_compensated[4];
   torque_compensated[ft_sensor_index][2] = ft_compensated[5];
+
+  // check if ft sensors are being reset
+  if (!has_ft_offsets[ft_sensor_index]) {
+      // accumulate values and divide them later by num of measurements
+      force_torque_offset[ft_sensor_index] += ft_compensated;
+
+     if (num_ft_measurements[ft_sensor_index]++ > 100) {
+       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
+       has_ft_offsets[ft_sensor_index] = true;
+       // set offset
+       ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
+       ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
+     }
+   }
 }
 }

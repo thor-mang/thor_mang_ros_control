@@ -15,7 +15,7 @@
     <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_trajectory_controllers.yaml" command="load" />
 
     <!-- Load ft-sensor compensation data -->
-    <rosparam file="$(find vigir_force_torque_compensation_lib)/config/thor_ft_compensation_data.yaml" command="load" />
+    <rosparam file="$(find vigir_force_torque_compensation_lib)/config/thor_vt_data.yaml" command="load" />
 
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
       args="footstep_preview_controller

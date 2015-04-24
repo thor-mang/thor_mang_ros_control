@@ -143,6 +143,12 @@ public:
 
   static ThorMangHardwareInterface::Ptr& Instance();
 
+  // UIDs of joints and sensors
+  static const std::string jointUIDs[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
+  static const std::string ftSensorUIDs[MAXIMUM_NUMBER_OF_FT_SENSORS];
+
+  void resetFtSensor(unsigned int sensor_id);
+
 protected:
   ThorMangHardwareInterface();
   ThorMangHardwareInterface(ThorMangHardwareInterface const&);
@@ -162,13 +168,9 @@ protected:
 
   void update_force_torque_compensation();
   void update_force_torque_sensors();
-  void compensate_force_torque(int ft_sensor_index);
+  void compensate_force_torque(unsigned int ft_sensor_index);
 
   static ThorMangHardwareInterface::Ptr singelton;
-
-  // UIDs of joints and sensors
-  static const std::string jointUIDs[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
-  static const std::string ftSensorUIDs[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   /** joint offsets from ROS zero to Robotis zero
   /* Robotis zero: "ready stand pose"
@@ -211,6 +213,11 @@ protected:
   double torque_raw[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
   double force_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
   double torque_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
+
+  // Zero
+  FTCompensation::Vector6d force_torque_offset[MAXIMUM_NUMBER_OF_FT_SENSORS];
+  unsigned int num_ft_measurements[MAXIMUM_NUMBER_OF_FT_SENSORS];
+  bool has_ft_offsets[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 

@@ -67,6 +67,11 @@ ThorMangRosControllerNode::ThorMangRosControllerNode()
   // subscribe topics
   torque_on_sub = nh.subscribe("torque_on", 1, &ThorMangRosControllerNode::setTorqueOn, this);
 
+  for (unsigned int sensor_id = 0; sensor_id < ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++) {
+      reset_ft_sub[sensor_id] = nh.subscribe<std_msgs::Empty>(
+                  "reset_ft/" + ThorMangHardwareInterface::ftSensorUIDs[sensor_id], 1, boost::bind(&ThorMangRosControllerNode::resetFtSensor, this, _1, sensor_id));
+  }
+
   ROS_INFO("Initialization of ros controller completed!");
 }
 
@@ -77,6 +82,11 @@ ThorMangRosControllerNode::~ThorMangRosControllerNode()
 void ThorMangRosControllerNode::setTorqueOn(std_msgs::BoolConstPtr enable)
 {
   ThorMangHardwareInterface::Instance()->setTorqueOn(enable->data);
+}
+
+void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id) {
+  ROS_INFO_STREAM("Resetting " << ThorMangHardwareInterface::ftSensorUIDs[sensor_id] << " ft sensor.");
+  ThorMangHardwareInterface::Instance()->resetFtSensor(sensor_id);
 }
 
 void ThorMangRosControllerNode::update(ros::Time time, ros::Duration period)
