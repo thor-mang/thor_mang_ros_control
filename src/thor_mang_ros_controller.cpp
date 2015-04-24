@@ -44,15 +44,14 @@ ThorMangRosControllerNode::ThorMangRosControllerNode()
   nh.param("joint_state_controller/publish_rate", joint_state_rate, 50.0);
 
   // Initialize THOR-MANG Framework
+  minIni* ini = new minIni(thor_mang_ini_file);
+  Thor::MotionManager::GetInstance()->LoadINISettings(ini);
+  delete ini;
+  
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
     ThorMangHardwareInterface::Instance()->setJointStateRate(joint_state_rate);
     Thor::MotionManager::GetInstance()->AddModule(ThorMangHardwareInterface::Instance().get());
-
-    minIni* ini = new minIni(thor_mang_ini_file);
-    Thor::MotionManager::GetInstance()->LoadINISettings(ini);
-    delete ini;
-
     //Thor::MotionManager::GetInstance()->StartTimer(); // sadly crashes
   }
   else
