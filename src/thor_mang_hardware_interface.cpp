@@ -312,16 +312,12 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
       continue;
 
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
-	ROS_ERROR("Received command for %d = %f, offset= %d",m_RobotInfo[id_index].m_ID, cmd[id_index], ros_joint_offsets[id_index]);
-
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
 
     // workaround for MX28 due to framework bug
     if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
     {
       int error;
-      ROS_ERROR("Writing servo ID %d in the add %d the value of %d", m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value);
       MotionManager::GetInstance()->WriteWord(m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value, &error);
     }
   }
