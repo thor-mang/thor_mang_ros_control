@@ -32,6 +32,7 @@
 #include <ros/ros.h>
 
 #include <std_msgs/Bool.h>
+#include <std_msgs/Empty.h>
 
 #include <controller_manager/controller_manager.h>
 #include <thor_mang_ros_control/thor_mang_hardware_interface.h>
@@ -50,9 +51,11 @@ public:
 
 protected:
   void setTorqueOn(std_msgs::BoolConstPtr enable);
+  void resetFtSensor(const std_msgs::EmptyConstPtr& empty_ptr, unsigned int sensor_id);
 
   // subscriber
   ros::Subscriber torque_on_sub;
+  ros::Subscriber reset_ft_sub[ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager;
 };
