@@ -842,7 +842,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
        has_ft_offsets[ft_sensor_index] = true;
        // set offset
        ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
-       ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset);
+       ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
      }
    }
 }
