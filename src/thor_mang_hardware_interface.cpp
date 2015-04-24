@@ -83,10 +83,10 @@ const int ThorMangHardwareInterface::ros_joint_offsets[MotionStatus::MAXIMUM_NUM
   0,        // waist_tilt
   0,        // head_pan
   0,        // head_tilt
-  1600,     //r_f0_j0	// r_hand_thumb
-  1330,     //l_f0_j0	// l_hand_thumb
-  1530,     //r_f1_j0	// r_hand_index_finger
-  1200,     //l_f1_j0	// l_hand_index_finger
+  -1600,     //r_f0_j0	// r_hand_thumb
+  -1200,     //l_f0_j0	// l_hand_thumb
+  -1530,     //r_f1_j0	// r_hand_index_finger
+  -1330,     //l_f1_j0	// l_hand_index_finger
   0,        // r_hand_middle_finger
   0,        // l_hand_middle_finger
   0         // waist_lidar
@@ -312,12 +312,16 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
       continue;
 
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
+	ROS_ERROR("Received command for %d = %f, offset= %d",m_RobotInfo[id_index].m_ID, cmd[id_index], ros_joint_offsets[id_index]);
+
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
 
     // workaround for MX28 due to framework bug
     if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
     {
       int error;
+      ROS_ERROR("Writing servo ID %d in the add %d the value of %d", m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value);
       MotionManager::GetInstance()->WriteWord(m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value, &error);
     }
   }
@@ -347,6 +351,9 @@ void ThorMangHardwareInterface::setTorqueOn(JointData& joint, bool enable)
   switch (joint.m_DXLInfo->MODEL_NUM)
   {
     case 28: // MX28
+      MotionManager::GetInstance()->WriteByte(joint.m_ID, MX28::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
+      break;
+    case 106: // MX106
       MotionManager::GetInstance()->WriteByte(joint.m_ID, MX28::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
       break;
     case 42: // PRO42
@@ -402,7 +409,7 @@ bool ThorMangHardwareInterface::robotBringUp()
   ROS_INFO("Setting up Dynamixal Pro...");
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
       continue;
 
     int error = setIndirectAddress(joint_index);
