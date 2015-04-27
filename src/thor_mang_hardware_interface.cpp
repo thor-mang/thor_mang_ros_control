@@ -744,12 +744,20 @@ void ThorMangHardwareInterface::InitForceTorque()
   int InitAngleWindowSize = 125;
   for (int count = 0; count < InitAngleWindowSize; count++)
   {
+    // trigger process and withit sensor readings
+    boost::mutex::scoped_lock lock(getDynamixelMutex());
+    MotionManager::GetInstance()->Process();
+    usleep(MotionModule::TIME_UNIT * 1000.0);
+    
     Init_right_fx_N  += MotionStatus::R_LEG_FX;
     Init_right_fy_N  += MotionStatus::R_LEG_FY;
     Init_right_fz_N  += MotionStatus::R_LEG_FZ;
     Init_right_Tx_Nm += MotionStatus::R_LEG_TX;
     Init_right_Ty_Nm += MotionStatus::R_LEG_TY;
     Init_right_Tz_Nm += MotionStatus::R_LEG_TZ;
+    
+    ROS_INFO_STREAM("RIGHT: " << MotionStatus::R_LEG_FX << " " << MotionStatus::R_LEG_FY << " " << MotionStatus::R_LEG_FZ << " " 
+                              << MotionStatus::R_LEG_TX << " " << MotionStatus::R_LEG_TY << " " << MotionStatus::R_LEG_TZ << "\n");
 
     Init_left_fx_N  += MotionStatus::L_LEG_FX;
     Init_left_fy_N  += MotionStatus::L_LEG_FY;
@@ -757,11 +765,9 @@ void ThorMangHardwareInterface::InitForceTorque()
     Init_left_Tx_Nm += MotionStatus::L_LEG_TX;
     Init_left_Ty_Nm += MotionStatus::L_LEG_TY;
     Init_left_Tz_Nm += MotionStatus::L_LEG_TZ;
-
-    // trigger process and withit sensor readings
-    boost::mutex::scoped_lock lock(getDynamixelMutex());
-    MotionManager::GetInstance()->Process();
-    usleep(MotionModule::TIME_UNIT * 1000.0);
+    
+    ROS_INFO_STREAM("LEFT: " << MotionStatus::L_LEG_FX << " " << MotionStatus::L_LEG_FY << " " << MotionStatus::L_LEG_FZ << " " 
+                             << MotionStatus::L_LEG_TX << " " << MotionStatus::L_LEG_TY << " " << MotionStatus::L_LEG_TZ << "\n");
   }
 
   Init_right_fx_N = Init_right_fx_N/(double)InitAngleWindowSize;
@@ -777,11 +783,11 @@ void ThorMangHardwareInterface::InitForceTorque()
   Init_left_Ty_Nm = Init_left_Ty_Nm/(double)InitAngleWindowSize;
   Init_left_Tz_Nm = Init_left_Tz_Nm/(double)InitAngleWindowSize;
   
-  ROS_INFO_STREAM("Initial values left:" << Init_left_fx_N << " " << Init_left_fy_N << " " << Init_left_fz_N << " " 
-                                         << Init_left_Tx_Nm << " " << Init_left_Ty_Nm << " " << Init_left_Tz_Nm << "\n");
+  ROS_INFO_STREAM("Initial values left: " << Init_left_fx_N << " " << Init_left_fy_N << " " << Init_left_fz_N << " " 
+                                          << Init_left_Tx_Nm << " " << Init_left_Ty_Nm << " " << Init_left_Tz_Nm << "\n");
   
-  ROS_INFO_STREAM("Initial values right:" << Init_right_fx_N << " " << Init_right_fy_N << " " << Init_right_fz_N << " " 
-                                          << Init_right_Tx_Nm << " " << Init_right_Ty_Nm << " " << Init_right_Tz_Nm << "\n");
+  ROS_INFO_STREAM("Initial values right: " << Init_right_fx_N << " " << Init_right_fy_N << " " << Init_right_fz_N << " " 
+                                           << Init_right_Tx_Nm << " " << Init_right_Ty_Nm << " " << Init_right_Tz_Nm << "\n");
 
   RecursiveWalking::GetInstance()->SetInitForceTorque(Init_right_fx_N ,  Init_right_fy_N ,  Init_right_fz_N ,
                                                       Init_right_Tx_Nm , Init_right_Ty_Nm , Init_right_Tz_Nm,
