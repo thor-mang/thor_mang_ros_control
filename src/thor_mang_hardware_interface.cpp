@@ -418,12 +418,12 @@ bool ThorMangHardwareInterface::robotBringUp()
   ROS_INFO("Moving to initial pose...");
   if (!goReadyPose())
     return false;
-
+  
   // init preview control module now
   RecursiveWalking::GetInstance()->Initialize();
   PreviewControlWalking::GetInstance()->Initialize();
-
-  ROS_INFO("Get initial foot FT sensor values...");
+  
+  ROS_INFO("Initialize FT-Sensors...");
   InitForceTorque();
 
   ROS_INFO("Robot setup finished! You can place the robot on ground now.");
@@ -725,6 +725,8 @@ void ThorMangHardwareInterface::initINS()
 
 void ThorMangHardwareInterface::InitForceTorque()
 {
+  MotionManager::GetInstance()->InitFTSensors();
+  
   // Set every sensor to 0
   for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
   {
