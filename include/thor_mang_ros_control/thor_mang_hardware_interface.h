@@ -218,6 +218,7 @@ protected:
   FTCompensation::Vector6d force_torque_offset[MAXIMUM_NUMBER_OF_FT_SENSORS];
   unsigned int num_ft_measurements[MAXIMUM_NUMBER_OF_FT_SENSORS];
   bool has_ft_offsets[MAXIMUM_NUMBER_OF_FT_SENSORS];
+  bool has_foot_ft_offsets_in_air;
 
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 

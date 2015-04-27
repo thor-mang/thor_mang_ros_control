@@ -99,6 +99,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , hardware_interface::RobotHW()
   , joint_state_intervall(20.0)
   , last_joint_state_read(ros::Time::now())
+  , has_foot_ft_offsets_in_air(false)
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
@@ -206,11 +207,8 @@ void ThorMangHardwareInterface::Initialize()
   for (unsigned int sensorIndex = 0; sensorIndex < MAXIMUM_NUMBER_OF_FT_SENSORS; sensorIndex++)
   {
     ros::NodeHandle nh(ftSensorUIDs[sensorIndex]);
-    if (!(ft_compensation[sensorIndex].loadMassComBias(nh) &&
-          ft_compensation[sensorIndex].loadHandToSensorOffset(nh, "sensor_offset")))
-    {
+    if (!(ft_compensation[sensorIndex].loadMassComBias(nh) && ft_compensation[sensorIndex].loadHandToSensorOffset(nh, "sensor_offset")))
       ROS_WARN_STREAM("Couldn't load complete ft sensor compensation data for " << ftSensorUIDs[sensorIndex] << " in " << nh.getNamespace() << ".");
-    }
   }
 
   robot_transforms.init();
@@ -425,8 +423,6 @@ bool ThorMangHardwareInterface::robotBringUp()
   
   ROS_INFO("Initialize FT-Sensors...");
   InitForceTorque();
-
-  ROS_INFO("Robot setup finished! You can place the robot on ground now.");
   return true;
 }
 
@@ -736,68 +732,6 @@ void ThorMangHardwareInterface::InitForceTorque()
       torque_raw[sensor_id][axis_id] = 0.0;
     }
   }
-
-  double Init_right_fx_N = 0,  Init_right_fy_N = 0,  Init_right_fz_N = 0;
-  double Init_right_Tx_Nm = 0, Init_right_Ty_Nm = 0, Init_right_Tz_Nm = 0;
-  double Init_left_fx_N = 0,  Init_left_fy_N = 0,  Init_left_fz_N = 0;
-  double Init_left_Tx_Nm = 0, Init_left_Ty_Nm = 0, Init_left_Tz_Nm = 0;
-  int InitAngleWindowSize = 125;
-  for (int count = 0; count < InitAngleWindowSize; count++)
-  {
-    // trigger process and withit sensor readings
-    boost::mutex::scoped_lock lock(getDynamixelMutex());
-    MotionManager::GetInstance()->Process();
-    usleep(MotionModule::TIME_UNIT * 1000.0);
-    
-    Init_right_fx_N  += MotionStatus::R_LEG_FX;
-    Init_right_fy_N  += MotionStatus::R_LEG_FY;
-    Init_right_fz_N  += MotionStatus::R_LEG_FZ;
-    Init_right_Tx_Nm += MotionStatus::R_LEG_TX;
-    Init_right_Ty_Nm += MotionStatus::R_LEG_TY;
-    Init_right_Tz_Nm += MotionStatus::R_LEG_TZ;
-    
-    ROS_INFO_STREAM("RIGHT: " << MotionStatus::R_LEG_FX << " " << MotionStatus::R_LEG_FY << " " << MotionStatus::R_LEG_FZ << " " 
-                              << MotionStatus::R_LEG_TX << " " << MotionStatus::R_LEG_TY << " " << MotionStatus::R_LEG_TZ << "\n");
-
-    Init_left_fx_N  += MotionStatus::L_LEG_FX;
-    Init_left_fy_N  += MotionStatus::L_LEG_FY;
-    Init_left_fz_N  += MotionStatus::L_LEG_FZ;
-    Init_left_Tx_Nm += MotionStatus::L_LEG_TX;
-    Init_left_Ty_Nm += MotionStatus::L_LEG_TY;
-    Init_left_Tz_Nm += MotionStatus::L_LEG_TZ;
-    
-    ROS_INFO_STREAM("LEFT: " << MotionStatus::L_LEG_FX << " " << MotionStatus::L_LEG_FY << " " << MotionStatus::L_LEG_FZ << " " 
-                             << MotionStatus::L_LEG_TX << " " << MotionStatus::L_LEG_TY << " " << MotionStatus::L_LEG_TZ << "\n");
-  }
-
-  Init_right_fx_N = Init_right_fx_N/(double)InitAngleWindowSize;
-  Init_right_fy_N = Init_right_fy_N/(double)InitAngleWindowSize;
-  Init_right_fz_N = Init_right_fz_N/(double)InitAngleWindowSize;
-  Init_right_Tx_Nm = Init_right_Tx_Nm/(double)InitAngleWindowSize;
-  Init_right_Ty_Nm = Init_right_Ty_Nm/(double)InitAngleWindowSize;
-  Init_right_Tz_Nm = Init_right_Tz_Nm/(double)InitAngleWindowSize;
-  Init_left_fx_N = Init_left_fx_N/(double)InitAngleWindowSize;
-  Init_left_fy_N = Init_left_fy_N/(double)InitAngleWindowSize;
-  Init_left_fz_N = Init_left_fz_N/(double)InitAngleWindowSize;
-  Init_left_Tx_Nm = Init_left_Tx_Nm/(double)InitAngleWindowSize;
-  Init_left_Ty_Nm = Init_left_Ty_Nm/(double)InitAngleWindowSize;
-  Init_left_Tz_Nm = Init_left_Tz_Nm/(double)InitAngleWindowSize;
-  
-  ROS_INFO_STREAM("Initial values left: " << Init_left_fx_N << " " << Init_left_fy_N << " " << Init_left_fz_N << " " 
-                                          << Init_left_Tx_Nm << " " << Init_left_Ty_Nm << " " << Init_left_Tz_Nm << "\n");
-  
-  ROS_INFO_STREAM("Initial values right: " << Init_right_fx_N << " " << Init_right_fy_N << " " << Init_right_fz_N << " " 
-                                           << Init_right_Tx_Nm << " " << Init_right_Ty_Nm << " " << Init_right_Tz_Nm << "\n");
-
-  RecursiveWalking::GetInstance()->SetInitForceTorque(Init_right_fx_N ,  Init_right_fy_N ,  Init_right_fz_N ,
-                                                      Init_right_Tx_Nm , Init_right_Ty_Nm , Init_right_Tz_Nm,
-                                                      Init_left_fx_N ,  Init_left_fy_N,  Init_left_fz_N,
-                                                      Init_left_Tx_Nm , Init_left_Ty_Nm, Init_left_Tz_Nm);
-
-  PreviewControlWalking::GetInstance()->SetInitForceTorque(Init_right_fx_N ,  Init_right_fy_N ,  Init_right_fz_N ,
-                                                           Init_right_Tx_Nm , Init_right_Ty_Nm , Init_right_Tz_Nm,
-                                                           Init_left_fx_N ,  Init_left_fy_N,  Init_left_fz_N,
-                                                           Init_left_Tx_Nm , Init_left_Ty_Nm, Init_left_Tz_Nm);
 }
 
 void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id)
@@ -830,6 +764,32 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
   compensate_force_torque(L_ARM);
   compensate_force_torque(R_LEG);
   compensate_force_torque(L_LEG);
+  
+  if (has_foot_ft_offsets_in_air)
+    return;
+  
+  // initialize walking engines with foot ft offsets
+  if (has_ft_offsets[L_LEG] && has_ft_offsets[R_LEG])
+  {    
+    ROS_INFO_STREAM("Initial values right foot: " << force_torque_offset[R_LEG][0] << " " << force_torque_offset[R_LEG][1] << " " << force_torque_offset[R_LEG][2] << " " 
+                                                  << force_torque_offset[R_LEG][3] << " " << force_torque_offset[R_LEG][4] << " " << force_torque_offset[R_LEG][5] << "\n");
+  
+    ROS_INFO_STREAM("Initial values left foot: " << force_torque_offset[L_LEG][0] << " " << force_torque_offset[L_LEG][1] << " " << force_torque_offset[L_LEG][2] << " " 
+                                                 << force_torque_offset[L_LEG][3] << " " << force_torque_offset[L_LEG][4] << " " << force_torque_offset[L_LEG][5] << "\n");
+
+    RecursiveWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
+                                                        force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
+                                                        force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
+                                                        force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
+  
+    PreviewControlWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
+                                                             force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
+                                                             force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
+                                                             force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
+    
+    has_foot_ft_offsets_in_air = true;
+    ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+  }
 }
 
 void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_index) {
