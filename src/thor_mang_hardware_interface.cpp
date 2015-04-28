@@ -790,6 +790,7 @@ void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id) {
   ROS_INFO_STREAM("Starting reset of id " << sensor_id);
   has_ft_offsets[sensor_id] = false;
   num_ft_measurements[sensor_id] = 0;
+  ft_compensation[sensor_id].setBias(FTCompensation::Vector6d::Zero());
 
   // Set offset to 0
   force_torque_offset[sensor_id] = FTCompensation::Vector6d::Zero();
