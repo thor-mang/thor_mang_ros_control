@@ -262,7 +262,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
 
   // read FT-Sensors
   force_raw[R_ARM][0] = MotionStatus::R_ARM_FX;
-  force_raw[R_ARM][1] = -MotionStatus::R_ARM_FY;
+  force_raw[R_ARM][1] = MotionStatus::R_ARM_FY;
   force_raw[R_ARM][2] = MotionStatus::R_ARM_FZ;
   torque_raw[R_ARM][0] = MotionStatus::R_ARM_TX;
   torque_raw[R_ARM][1] = MotionStatus::R_ARM_TY;
