@@ -83,10 +83,10 @@ const int ThorMangHardwareInterface::ros_joint_offsets[MotionStatus::MAXIMUM_NUM
   0,        // waist_tilt
   0,        // head_pan
   0,        // head_tilt
-  1600,     //r_f0_j0	// r_hand_thumb
-  1330,     //l_f0_j0	// l_hand_thumb
-  1530,     //r_f1_j0	// r_hand_index_finger
-  1200,     //l_f1_j0	// l_hand_index_finger
+  -504,     // r_hand_thumb
+  -821,     // l_hand_thumb
+  -434,     // r_hand_index_finger
+  -951,     // l_hand_index_finger
   0,        // r_hand_middle_finger
   0,        // l_hand_middle_finger
   0         // waist_lidar
@@ -99,6 +99,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , hardware_interface::RobotHW()
   , joint_state_intervall(20.0)
   , last_joint_state_read(ros::Time::now())
+  , has_foot_ft_offsets_in_air(false)
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
@@ -194,9 +195,8 @@ void ThorMangHardwareInterface::Initialize()
   }
   registerInterface(&force_torque_sensor_interface);
 
-  for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++) {
-      resetFtSensor(sensor_id);
-  }
+  for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
+    resetFtSensor(sensor_id);
 
   // footstep interface
   hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle", &getDynamixelMutex());
@@ -204,12 +204,11 @@ void ThorMangHardwareInterface::Initialize()
   registerInterface(&footstep_interface);
 
   // load compensation data from parameter server
-  for (unsigned int sensorIndex = 0; sensorIndex < MAXIMUM_NUMBER_OF_FT_SENSORS; sensorIndex++) {
-      ros::NodeHandle nh(ftSensorUIDs[sensorIndex]);
-      if (!(ft_compensation[sensorIndex].loadMassComBias(nh) &&
-            ft_compensation[sensorIndex].loadHandToSensorOffset(nh, "sensor_offset"))) {
-          ROS_WARN_STREAM("Couldn't load complete ft sensor compensation data for " << ftSensorUIDs[sensorIndex] << " in " << nh.getNamespace() << ".");
-      }
+  for (unsigned int sensorIndex = 0; sensorIndex < MAXIMUM_NUMBER_OF_FT_SENSORS; sensorIndex++)
+  {
+    ros::NodeHandle nh(ftSensorUIDs[sensorIndex]);
+    if (!(ft_compensation[sensorIndex].loadMassComBias(nh) && ft_compensation[sensorIndex].loadHandToSensorOffset(nh, "sensor_offset")))
+      ROS_WARN_STREAM("Couldn't load complete ft sensor compensation data for " << ftSensorUIDs[sensorIndex] << " in " << nh.getNamespace() << ".");
   }
 
   robot_transforms.init();
@@ -315,7 +314,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
 
     // workaround for MX28 due to framework bug
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
     {
       int error;
       MotionManager::GetInstance()->WriteWord(m_RobotInfo[joint_index].m_ID, MX28::P_GOAL_POSITION_L, m_RobotInfo[joint_index].m_Value, &error);
@@ -347,6 +346,7 @@ void ThorMangHardwareInterface::setTorqueOn(JointData& joint, bool enable)
   switch (joint.m_DXLInfo->MODEL_NUM)
   {
     case 28: // MX28
+    case 106: // MX106
       MotionManager::GetInstance()->WriteByte(joint.m_ID, MX28::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
       break;
     case 42: // PRO42
@@ -402,7 +402,7 @@ bool ThorMangHardwareInterface::robotBringUp()
   ROS_INFO("Setting up Dynamixal Pro...");
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
       continue;
 
     int error = setIndirectAddress(joint_index);
@@ -416,15 +416,13 @@ bool ThorMangHardwareInterface::robotBringUp()
   ROS_INFO("Moving to initial pose...");
   if (!goReadyPose())
     return false;
-
+  
   // init preview control module now
   RecursiveWalking::GetInstance()->Initialize();
   PreviewControlWalking::GetInstance()->Initialize();
-
-  ROS_INFO("Get initial foot FT sensor values...");
+  
+  ROS_INFO("Initialize FT-Sensors...");
   InitForceTorque();
-
-  ROS_INFO("Robot setup finished! You can place the robot on ground now.");
   return true;
 }
 
@@ -595,7 +593,8 @@ bool ThorMangHardwareInterface::goReadyPose()
   }
 
   usleep(5000000);
-  for (unsigned int index = 0; index < m_RobotInfo.size(); index++) {
+  for (unsigned int index = 0; index < m_RobotInfo.size(); index++)
+  {
     int id = m_RobotInfo[index].m_ID;
 
     int error;
@@ -722,70 +721,25 @@ void ThorMangHardwareInterface::initINS()
 
 void ThorMangHardwareInterface::InitForceTorque()
 {
-    // Set every sensor to 0
-    for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++) {
-       for (unsigned int axis_id = 0; axis_id < 3; axis_id++)
-       {
-         force_raw[sensor_id][axis_id] = 0.0;
-         torque_raw[sensor_id][axis_id] = 0.0;
-       }
-     }
-
-  double Init_right_fx_N = 0,  Init_right_fy_N = 0,  Init_right_fz_N = 0;
-  double Init_right_Tx_Nm = 0, Init_right_Ty_Nm = 0, Init_right_Tz_Nm = 0;
-  double Init_left_fx_N = 0,  Init_left_fy_N = 0,  Init_left_fz_N = 0;
-  double Init_left_Tx_Nm = 0, Init_left_Ty_Nm = 0, Init_left_Tz_Nm = 0;
-  int InitAngleWindowSize = 125;
-  for (int count = 0; count < InitAngleWindowSize; count++)
+  MotionManager::GetInstance()->InitFTSensors();
+  
+  // Set every sensor to 0
+  for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
   {
-    Init_right_fx_N  += MotionStatus::R_LEG_FX;
-    Init_right_fy_N  += MotionStatus::R_LEG_FY;
-    Init_right_fz_N  += MotionStatus::R_LEG_FZ;
-    Init_right_Tx_Nm += MotionStatus::R_LEG_TX;
-    Init_right_Ty_Nm += MotionStatus::R_LEG_TY;
-    Init_right_Tz_Nm += MotionStatus::R_LEG_TZ;
-
-    Init_left_fx_N  += MotionStatus::L_LEG_FX;
-    Init_left_fy_N  += MotionStatus::L_LEG_FY;
-    Init_left_fz_N  += MotionStatus::L_LEG_FZ;
-    Init_left_Tx_Nm += MotionStatus::L_LEG_TX;
-    Init_left_Ty_Nm += MotionStatus::L_LEG_TY;
-    Init_left_Tz_Nm += MotionStatus::L_LEG_TZ;
-
-    // trigger process and withit sensor readings
-    boost::mutex::scoped_lock lock(getDynamixelMutex());
-    MotionManager::GetInstance()->Process();
-    usleep(MotionModule::TIME_UNIT * 1000.0);
+    for (unsigned int axis_id = 0; axis_id < 3; axis_id++)
+    {
+      force_raw[sensor_id][axis_id] = 0.0;
+      torque_raw[sensor_id][axis_id] = 0.0;
+    }
   }
-
-  Init_right_fx_N = Init_right_fx_N/(double)InitAngleWindowSize;
-  Init_right_fy_N = Init_right_fy_N/(double)InitAngleWindowSize;
-  Init_right_fz_N = Init_right_fz_N/(double)InitAngleWindowSize;
-  Init_right_Tx_Nm = Init_right_Tx_Nm/(double)InitAngleWindowSize;
-  Init_right_Ty_Nm = Init_right_Ty_Nm/(double)InitAngleWindowSize;
-  Init_right_Tz_Nm = Init_right_Tz_Nm/(double)InitAngleWindowSize;
-  Init_left_fx_N = Init_left_fx_N/(double)InitAngleWindowSize;
-  Init_left_fy_N = Init_left_fy_N/(double)InitAngleWindowSize;
-  Init_left_fz_N = Init_left_fz_N/(double)InitAngleWindowSize;
-  Init_left_Tx_Nm = Init_left_Tx_Nm/(double)InitAngleWindowSize;
-  Init_left_Ty_Nm = Init_left_Ty_Nm/(double)InitAngleWindowSize;
-  Init_left_Tz_Nm = Init_left_Tz_Nm/(double)InitAngleWindowSize;
-
-  RecursiveWalking::GetInstance()->SetInitForceTorque(Init_right_fx_N ,  Init_right_fy_N ,  Init_right_fz_N ,
-                                                      Init_right_Tx_Nm , Init_right_Ty_Nm , Init_right_Tz_Nm,
-                                                      Init_left_fx_N ,  Init_left_fy_N,  Init_left_fz_N,
-                                                      Init_left_Tx_Nm , Init_left_Ty_Nm, Init_left_Tz_Nm);
-
-  PreviewControlWalking::GetInstance()->SetInitForceTorque(Init_right_fx_N ,  Init_right_fy_N ,  Init_right_fz_N ,
-                                                           Init_right_Tx_Nm , Init_right_Ty_Nm , Init_right_Tz_Nm,
-                                                           Init_left_fx_N ,  Init_left_fy_N,  Init_left_fz_N,
-                                                           Init_left_Tx_Nm , Init_left_Ty_Nm, Init_left_Tz_Nm);
 }
 
-void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id) {
-  if (sensor_id < 0 || sensor_id >= MAXIMUM_NUMBER_OF_FT_SENSORS) {
-      ROS_ERROR_STREAM("Id: " << sensor_id << " is not a valid ft sensor id");
-      return;
+void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id)
+{
+  if (sensor_id < 0 || sensor_id >= MAXIMUM_NUMBER_OF_FT_SENSORS)
+  {
+    ROS_ERROR_STREAM("Id: " << sensor_id << " is not a valid ft sensor id");
+    return;
   }
   ROS_INFO_STREAM("Starting reset of id " << sensor_id);
   has_ft_offsets[sensor_id] = false;
@@ -811,6 +765,32 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
   compensate_force_torque(L_ARM);
   compensate_force_torque(R_LEG);
   compensate_force_torque(L_LEG);
+  
+  if (has_foot_ft_offsets_in_air)
+    return;
+  
+  // initialize walking engines with foot ft offsets
+  if (has_ft_offsets[L_LEG] && has_ft_offsets[R_LEG])
+  {    
+    ROS_INFO_STREAM("Initial values right foot: " << force_torque_offset[R_LEG][0] << " " << force_torque_offset[R_LEG][1] << " " << force_torque_offset[R_LEG][2] << " " 
+                                                  << force_torque_offset[R_LEG][3] << " " << force_torque_offset[R_LEG][4] << " " << force_torque_offset[R_LEG][5] << "\n");
+  
+    ROS_INFO_STREAM("Initial values left foot: " << force_torque_offset[L_LEG][0] << " " << force_torque_offset[L_LEG][1] << " " << force_torque_offset[L_LEG][2] << " " 
+                                                 << force_torque_offset[L_LEG][3] << " " << force_torque_offset[L_LEG][4] << " " << force_torque_offset[L_LEG][5] << "\n");
+
+    RecursiveWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
+                                                        force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
+                                                        force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
+                                                        force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
+  
+    PreviewControlWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
+                                                             force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
+                                                             force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
+                                                             force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
+    
+    has_foot_ft_offsets_in_air = true;
+    ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+  }
 }
 
 void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_index) {
@@ -834,17 +814,19 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
   torque_compensated[ft_sensor_index][2] = ft_compensated[5];
 
   // check if ft sensors are being reset
-  if (!has_ft_offsets[ft_sensor_index]) {
-      // accumulate values and divide them later by num of measurements
-      force_torque_offset[ft_sensor_index] += ft_compensated;
+  if (!has_ft_offsets[ft_sensor_index])
+  {
+    // accumulate values and divide them later by num of measurements
+    force_torque_offset[ft_sensor_index] += ft_compensated;
 
-     if (num_ft_measurements[ft_sensor_index]++ > 100) {
-       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
-       has_ft_offsets[ft_sensor_index] = true;
-       // set offset
-       ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
-       ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
-     }
-   }
+    if (num_ft_measurements[ft_sensor_index]++ > 100)
+    {
+      force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
+      has_ft_offsets[ft_sensor_index] = true;
+      // set offset
+      ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
+      ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
+    }
+  }
 }
 }
