@@ -779,26 +779,40 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
     return;
   
   // initialize walking engines with foot ft offsets
-  if (has_ft_offsets[L_LEG] && has_ft_offsets[R_LEG])
-  {    
-    ROS_INFO_STREAM("Initial values right foot: " << force_torque_offset[R_LEG][0] << " " << force_torque_offset[R_LEG][1] << " " << force_torque_offset[R_LEG][2] << " " 
-                                                  << force_torque_offset[R_LEG][3] << " " << force_torque_offset[R_LEG][4] << " " << force_torque_offset[R_LEG][5] << "\n");
-  
-    ROS_INFO_STREAM("Initial values left foot: " << force_torque_offset[L_LEG][0] << " " << force_torque_offset[L_LEG][1] << " " << force_torque_offset[L_LEG][2] << " " 
-                                                 << force_torque_offset[L_LEG][3] << " " << force_torque_offset[L_LEG][4] << " " << force_torque_offset[L_LEG][5] << "\n");
+  if (!has_foot_ft_offsets_in_air)
+  {
+    if (MotionManager::GetInstance()->RightLegFTSensor.hasBias() && MotionManager::GetInstance()->LeftLegFTSensor.hasBias())
+    {
+      double right_foot_offset[6];
+      double left_foot_offset[6];
 
-    RecursiveWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
-                                                        force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
-                                                        force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
-                                                        force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
-  
-    PreviewControlWalking::GetInstance()->SetInitForceTorque(force_torque_offset[R_LEG][0] ,  force_torque_offset[R_LEG][1] ,  force_torque_offset[R_LEG][2] ,
-                                                             force_torque_offset[R_LEG][3] , force_torque_offset[R_LEG][4] , force_torque_offset[R_LEG][5],
-                                                             force_torque_offset[L_LEG][0] ,  force_torque_offset[L_LEG][1],  force_torque_offset[L_LEG][2],
-                                                             force_torque_offset[L_LEG][3] , force_torque_offset[L_LEG][4], force_torque_offset[L_LEG][5]);
-    
-    has_foot_ft_offsets_in_air = true;
-    ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+      // get offsets
+      MotionManager::GetInstance()->RightLegFTSensor.getForceTorqueBias(&right_foot_offset[0], &right_foot_offset[1], &right_foot_offset[2],
+                                                                        &right_foot_offset[3], &right_foot_offset[4], &right_foot_offset[5]);
+      
+      MotionManager::GetInstance()->LeftLegFTSensor.getForceTorqueBias(&left_foot_offset[0], &left_foot_offset[1], &left_foot_offset[2],
+                                                                       &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
+      
+      ROS_INFO_STREAM("Initial values right foot: " << right_foot_offset[0] << " " << right_foot_offset[1] << " " << right_foot_offset[2] << " " 
+                                                    << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5] << "\n");
+
+      ROS_INFO_STREAM("Initial values left foot: " << left_foot_offset[0] << " " << left_foot_offset[1] << " " << left_foot_offset[2] << " " 
+                                                   << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5] << "\n");
+
+      // set offsets at walking controllers
+      RecursiveWalking::GetInstance()->SetInitForceTorque(right_foot_offset[0], right_foot_offset[1], right_foot_offset[2] ,
+                                                          right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
+                                                          left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
+                                                          left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
+
+      PreviewControlWalking::GetInstance()->SetInitForceTorque(right_foot_offset[0], right_foot_offset[1], right_foot_offset[2] ,
+                                                               right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
+                                                               left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
+                                                               left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
+
+      has_foot_ft_offsets_in_air = true;
+      ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+    }
   }
 }
 
