@@ -141,7 +141,7 @@ void ThorMangFootstepRecursiveController::InitWalking()
   RecursiveWalking::GetInstance()->FOOT_LANDING_OFFSET_GAIN =   +1.0*0;
   RecursiveWalking::GetInstance()->FOOT_LANDING_DETECT_N = 50;
 
-  RecursiveWalking::GetInstance()->SYSTEM_CONTROL_UNIT_TIME_SEC = system_control_unit_time_sec;
+  RecursiveWalking::GetInstance()->SYSTEM_CONTROL_UNIT_TIME_SEC = MotionModule::TIME_UNIT / 1000.0;
   RecursiveWalking::GetInstance()->FOOT_LANDING_DETECTION_TIME_MAX_SEC = 10.0;
 
   RecursiveWalking::GetInstance()->FOOT_ROLL_ADJUSTMENT_ABS_MAX_RAD = 10.0*M_PI/180;
