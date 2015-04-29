@@ -794,10 +794,10 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
                                                                        &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
       
       ROS_INFO_STREAM("Initial values right foot: " << right_foot_offset[0] << " " << right_foot_offset[1] << " " << right_foot_offset[2] << " " 
-                                                    << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5] << "\n");
+                                                    << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5]);
 
       ROS_INFO_STREAM("Initial values left foot: " << left_foot_offset[0] << " " << left_foot_offset[1] << " " << left_foot_offset[2] << " " 
-                                                   << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5] << "\n");
+                                                   << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5]);
 
       // set offsets at walking controllers
       RecursiveWalking::GetInstance()->SetInitForceTorque(right_foot_offset[0], right_foot_offset[1], right_foot_offset[2] ,
