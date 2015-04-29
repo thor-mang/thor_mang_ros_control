@@ -210,6 +210,7 @@ void ThorMangHardwareInterface::Initialize()
     ros::NodeHandle nh(ftSensorUIDs[sensorIndex]);
     if (!(ft_compensation[sensorIndex].loadMassComBias(nh) && ft_compensation[sensorIndex].loadHandToSensorOffset(nh, "sensor_offset")))
       ROS_WARN_STREAM("Couldn't load complete ft sensor compensation data for " << ftSensorUIDs[sensorIndex] << " in " << nh.getNamespace() << ".");
+    ft_compensation[sensorIndex].initGravityPublisher(ftSensorUIDs[sensorIndex] + "_gravity", ftSensorUIDs[sensorIndex]);
   }
 
   robot_transforms.init();
