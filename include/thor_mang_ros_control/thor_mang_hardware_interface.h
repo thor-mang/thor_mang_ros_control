@@ -133,6 +133,7 @@ public:
 
   void setJointStateRate(double joint_state_rate);
 
+  void enableTorqueOnStart(bool enable);
   void setTorqueOn(JointData& joint, bool enable);
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
@@ -181,6 +182,7 @@ protected:
   // parameters
   double joint_state_intervall;
   ros::Time last_joint_state_read;
+  bool torque_on_start;
 
   // mutex
   mutable boost::mutex dynamixel_mutex;

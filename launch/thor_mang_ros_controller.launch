@@ -3,6 +3,7 @@
 <launch>
   <!-- Provide option to set namespace from outside -->
   <arg name="namespace" default="/thor_mang"/>
+  <arg name="torque" default="True" />
 
   <!-- robot semantics for moveit -->
   <param name="/robot_description_semantic" textfile="$(find thor_mang_tud_moveit_config)/config/thor_mang_robot.srdf" />
@@ -29,7 +30,7 @@
       <arg name="namespace" value="$(arg namespace)" />
     </include>
 
-    <node name="thor_mang_ros_controller" pkg="thor_mang_ros_control" type="thor_mang_ros_controller" respawn="true" output="screen">
+    <node name="thor_mang_ros_controller" pkg="thor_mang_ros_control" type="thor_mang_ros_controller" respawn="true" output="screen" args="$(arg torque)">
       <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_controller_config.yaml" command="load"/>
       <param name="thor_mang_ini_file" value="$(find thor_mang_ros_control)/config/thor_mang_config.ini" />
     </node>

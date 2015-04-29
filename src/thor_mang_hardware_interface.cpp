@@ -100,6 +100,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , joint_state_intervall(20.0)
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(false)
+  , torque_on_start(false)
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
@@ -332,6 +333,13 @@ void ThorMangHardwareInterface::setJointStateRate(double joint_state_rate)
   this->joint_state_intervall = 1.0/joint_state_rate;
 }
 
+void ThorMangHardwareInterface::enableTorqueOnStart(bool enable) {
+  if (!enable) {
+    ROS_WARN("Disabled torque on start!");
+  }
+  torque_on_start = enable;
+}
+
 void ThorMangHardwareInterface::setTorqueOn(JointData& joint, bool enable)
 {
   if (joint.m_ID < 1 || joint.m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
@@ -428,7 +436,7 @@ bool ThorMangHardwareInterface::robotBringUp()
 
 bool ThorMangHardwareInterface::goReadyPose()
 {
-  setTorqueOn(true);
+  setTorqueOn(torque_on_start);
 
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)

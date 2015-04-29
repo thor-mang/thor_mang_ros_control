@@ -44,7 +44,7 @@ namespace Thor
 class ThorMangRosControllerNode
 {
 public:
-  ThorMangRosControllerNode();
+  ThorMangRosControllerNode(bool torque_on);
   ~ThorMangRosControllerNode();
 
   void update(ros::Time time, ros::Duration period);

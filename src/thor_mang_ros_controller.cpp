@@ -32,7 +32,7 @@
 
 namespace Thor
 {
-ThorMangRosControllerNode::ThorMangRosControllerNode()
+ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
 {
   ros::NodeHandle nh;
 
@@ -48,6 +48,7 @@ ThorMangRosControllerNode::ThorMangRosControllerNode()
   Thor::MotionManager::GetInstance()->LoadINISettings(ini);
   delete ini;
   
+  ThorMangHardwareInterface::Instance()->enableTorqueOnStart(torque_on);
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
     ThorMangHardwareInterface::Instance()->setJointStateRate(joint_state_rate);
@@ -110,7 +111,15 @@ int main(int argc, char** argv)
   double control_rate;
   nh.param("thor_mang_ros_controller/control_rate", control_rate, 125.0);
 
-  Thor::ThorMangRosControllerNode thor_mang_ros_controller_node;
+  bool torque_on = true;
+  if (argc == 2) {
+    std::string torque_str = argv[1];
+    if (torque_str.compare("False") == 0) {
+      torque_on = false;
+    }
+  }
+
+  Thor::ThorMangRosControllerNode thor_mang_ros_controller_node(torque_on);
 
   ros::AsyncSpinner spinner(4);
   spinner.start();
