@@ -550,6 +550,9 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 26)
       initJointPosition(joint_index,  outValue[11] + MotionManager::GetInstance()->m_Offset[25]);
 
+    else if (id == 37)
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[36]);
+
     usleep(1000);
   }
 
@@ -576,15 +579,8 @@ bool ThorMangHardwareInterface::goReadyPose()
 
 void ThorMangHardwareInterface::initJointPosition(unsigned int joint_index, int value)
 {
-  if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-    return;
-
-  int error;
-  m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(m_RobotInfo[joint_index].m_ID, PRO54::P_GOAL_POSITION_LL, value, &error);
   MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value;
-
-  if (error)
-    ROS_ERROR("Error %d occured on ID %d", error, m_RobotInfo[joint_index].m_ID);
+  MotionManager::GetInstance()->WriteGoalPosition(MotionStatus::m_CurrentJoints[joint_index]);
 }
 
 void ThorMangHardwareInterface::initINS()
