@@ -33,7 +33,6 @@
 #include <tf/tf.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
 
 // Dynamixel Pro Driver
 //#include <dynamixel_pro_driver/dynamixel_pro_driver.h>
@@ -129,12 +128,9 @@ public:
   void write(ros::Time time, ros::Duration period);
 
   // interfaces
-  static boost::mutex& getDynamixelMutex();
-
   void setJointStateRate(double joint_state_rate);
 
   void enableTorqueOnStart(bool enable);
-  void setTorqueOn(JointData& joint, bool enable);
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
 

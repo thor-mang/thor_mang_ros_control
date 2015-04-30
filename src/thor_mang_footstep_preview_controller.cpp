@@ -179,16 +179,14 @@ void ThorMangFootstepPreviewController::InitWalking()
 
   //PreviewControlWalking::GetInstance()->SetRefZMPDecisionParameter(0.0, 0.0, 0.0);
 
-  boost::mutex::scoped_lock lock(footsteps_handle.getDynamixelMutex());
-
   // init servo gains
   for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
   {
     int id = MotionStatus::m_CurrentJoints[index].m_ID;
 
     int err;
-    MotionStatus::m_CurrentJoints[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
-    MotionStatus::m_CurrentJoints[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
   }
 }
 
@@ -250,9 +248,6 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
   for (std::vector<StepData>::iterator itr = step_data_list.begin(); itr != step_data_list.end(); itr++)
   {
     StepData step_data = *itr;
-
-    /// Hack - Time scaling due to slow CPU
-    step_data.TimeData.dAbsStepTime *= (MotionModule::TIME_UNIT / 1000.0) / system_control_unit_time_sec;
 
     ROS_INFO("%s", thor_mang_footstep_planning::toString(step_data).c_str());
     ROS_INFO("------------------------------------");

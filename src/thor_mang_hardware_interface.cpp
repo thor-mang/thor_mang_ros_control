@@ -200,7 +200,7 @@ void ThorMangHardwareInterface::Initialize()
     resetFtSensor(sensor_id);
 
   // footstep interface
-  hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle", &getDynamixelMutex());
+  hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle");
   footstep_interface.registerHandle(footsteps_handle);
   registerInterface(&footstep_interface);
 
@@ -301,8 +301,6 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
   if (m_RobotInfo.size() == 0)
     return;
 
-  boost::mutex::scoped_lock lock(getDynamixelMutex());
-
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
     int id_index = m_RobotInfo[joint_index].m_ID-1;
@@ -317,57 +315,23 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
   }
 }
 
-boost::mutex& ThorMangHardwareInterface::getDynamixelMutex()
-{
-  return Instance()->dynamixel_mutex;
-}
-
 void ThorMangHardwareInterface::setJointStateRate(double joint_state_rate)
 {
   this->joint_state_intervall = 1.0/joint_state_rate;
 }
 
-void ThorMangHardwareInterface::enableTorqueOnStart(bool enable) {
-  if (!enable) {
-    ROS_WARN("Disabled torque on start!");
-  }
-  torque_on_start = enable;
-}
-
-void ThorMangHardwareInterface::setTorqueOn(JointData& joint, bool enable)
+void ThorMangHardwareInterface::enableTorqueOnStart(bool enable)
 {
-  if (joint.m_ID < 1 || joint.m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
-  {
-    ROS_ERROR("[setTorqueOn] Invalid ID %i", joint.m_ID);
-    return;
-  }
-
-  boost::mutex::scoped_lock lock(getDynamixelMutex());
-
-  int error = 0;
-  switch (joint.m_DXLInfo->MODEL_NUM)
-  {
-    case 28: // MX28
-    case 106: // MX106
-      MotionManager::GetInstance()->WriteByte(joint.m_ID, MX28::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
-      break;
-    case 42: // PRO42
-      MotionManager::GetInstance()->WriteByte(joint.m_ID, PRO42::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
-      break;
-    case 54: // PRO54
-      MotionManager::GetInstance()->WriteByte(joint.m_ID, PRO54::P_TORQUE_ENABLE, enable ? 1 : 0, &error);
-      break;
-  }
-
-  if (error)
-    ROS_ERROR("Error %d occured on ID %d", error, joint.m_ID);
+  if (!enable)
+    ROS_WARN("Disabled torque on start!");
+  torque_on_start = enable;
 }
 
 void ThorMangHardwareInterface::setTorqueOn(int id, bool enable)
 {
   JointData* joint;
   if (joint = getJoint(id))
-    setTorqueOn(*joint, enable);
+    MotionManager::GetInstance()->SetTorqueOn(*joint, enable);
   else
     ROS_ERROR("[setTorqueOn] No joint with ID %i available!", id);
 }
@@ -385,7 +349,7 @@ void ThorMangHardwareInterface::setTorqueOn(bool enable)
     if (!enable && m_RobotInfo[joint_index].m_ID == 37)
       continue;
 
-    setTorqueOn(m_RobotInfo[joint_index], enable);
+    MotionManager::GetInstance()->SetTorqueOn(m_RobotInfo[joint_index], enable);
   }
 }
 
