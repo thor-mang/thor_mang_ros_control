@@ -653,14 +653,15 @@ void ThorMangHardwareInterface::update_force_torque_compensation()
   }
 }
 
-Thor::FTSensor& ThorMangHardwareInterface::getFTSensorInstance(unsigned int sensor_id) {
-  switch (sensor_id) {
+Thor::FTSensor& ThorMangHardwareInterface::getFTSensorInstance(unsigned int sensor_id)
+{
+  switch (sensor_id)
+  {
     case 0: return MotionManager::GetInstance()->RightArmFTSensor;
     case 1: return MotionManager::GetInstance()->LeftArmFTSensor;
     case 2: return MotionManager::GetInstance()->RightLegFTSensor;
     case 3: return MotionManager::GetInstance()->LeftLegFTSensor;
   }
-
 }
 
 void ThorMangHardwareInterface::update_force_torque_sensors()
