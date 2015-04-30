@@ -368,11 +368,11 @@ bool ThorMangHardwareInterface::robotBringUp()
   ROS_INFO("Moving to initial pose...");
   if (!goReadyPose())
     return false;
-  
+
   // init preview control module now
   RecursiveWalking::GetInstance()->Initialize();
   PreviewControlWalking::GetInstance()->Initialize();
-  
+
   ROS_INFO("Initialize FT-Sensors...");
   InitForceTorque();
   return true;
@@ -385,6 +385,9 @@ bool ThorMangHardwareInterface::goReadyPose()
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+      continue;
+
     int id = m_RobotInfo[joint_index].m_ID;
 
     int error;
@@ -460,6 +463,9 @@ bool ThorMangHardwareInterface::goReadyPose()
 
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+      continue;
+
     int id = m_RobotInfo[joint_index].m_ID;
 
     int error;
@@ -480,40 +486,43 @@ bool ThorMangHardwareInterface::goReadyPose()
     int id = m_RobotInfo[joint_index].m_ID;
 
     if (id == 1)
-      initJointPosition(joint_index, -62750);
+      initJointPosition(joint_index, -62750 + MotionManager::GetInstance()->m_Offset[0]);
     else if (id == 2)
-      initJointPosition(joint_index, 62750);
+      initJointPosition(joint_index, 62750 + MotionManager::GetInstance()->m_Offset[1]);
     else if (id == 3)
-      initJointPosition(joint_index, -109520);
+      initJointPosition(joint_index, -109520 + MotionManager::GetInstance()->m_Offset[2]);
     else if (id == 4)
-      initJointPosition(joint_index, 109520);
+      initJointPosition(joint_index, 109520 + MotionManager::GetInstance()->m_Offset[3]);
     else if (id == 5)
-      initJointPosition(joint_index, 125500);
+      initJointPosition(joint_index, 125500 + MotionManager::GetInstance()->m_Offset[4]);
     else if (id == 6)
-      initJointPosition(joint_index, -125500);
+      initJointPosition(joint_index, -125500 + MotionManager::GetInstance()->m_Offset[5]);
     else if (id == 7)
-      initJointPosition(joint_index, 62750);
+      initJointPosition(joint_index, 62750 + MotionManager::GetInstance()->m_Offset[6]);
     else if (id == 8)
-      initJointPosition(joint_index, -62750);
+      initJointPosition(joint_index, -62750 + MotionManager::GetInstance()->m_Offset[7]);
     else if (id == 9)
-      initJointPosition(joint_index, -75000);
+      initJointPosition(joint_index, -75000 + MotionManager::GetInstance()->m_Offset[8]);
     else if (id == 10)
-      initJointPosition(joint_index,  75000);
+      initJointPosition(joint_index,  75000 + MotionManager::GetInstance()->m_Offset[9]);
 
-
-    else if ((id == 27) || (id == 28) || (id == 29))
-      initJointPosition(joint_index,  0);
-    else if (id == 30)
-      initJointPosition(joint_index,  0);
     else if (id == 11)
-      initJointPosition(joint_index,  0);
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[10]);
     else if (id == 12)
-      initJointPosition(joint_index,  0);
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[11]);
     else if (id == 13)
-      initJointPosition(joint_index,  0);
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[12]);
     else if (id == 14)
-      initJointPosition(joint_index,  0);
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[13]);
 
+    else if (id == 27)
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[26]);
+    else if (id == 28)
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[27]);
+    else if (id == 29)
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[28]);
+    else if (id == 30)
+      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[29]);
 
     else if (id == 15)
       initJointPosition(joint_index,  outValue[0] + MotionManager::GetInstance()->m_Offset[14]);
@@ -545,18 +554,20 @@ bool ThorMangHardwareInterface::goReadyPose()
   }
 
   usleep(5000000);
-  for (unsigned int index = 0; index < m_RobotInfo.size(); index++)
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    int id = m_RobotInfo[index].m_ID;
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+      continue;
+
+    int id = m_RobotInfo[joint_index].m_ID;
 
     int error;
-    m_RobotInfo[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &error);
-    m_RobotInfo[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &error);
+    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &error);
+    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &error);
 
     if (error)
       ROS_ERROR("Error %d occured on ID %d", error, id);
-    for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
-      resetFtSensor(sensor_id);
+
     usleep(1000);
   }
 
@@ -565,6 +576,9 @@ bool ThorMangHardwareInterface::goReadyPose()
 
 void ThorMangHardwareInterface::initJointPosition(unsigned int joint_index, int value)
 {
+  if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+    return;
+
   int error;
   m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(m_RobotInfo[joint_index].m_ID, PRO54::P_GOAL_POSITION_LL, value, &error);
   MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value;
@@ -606,7 +620,7 @@ void ThorMangHardwareInterface::initINS()
 void ThorMangHardwareInterface::InitForceTorque()
 {
   MotionManager::GetInstance()->InitFTSensors();
-  
+
   // Set every sensor to 0
   for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
   {
@@ -659,10 +673,10 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
   compensate_force_torque(L_ARM);
   compensate_force_torque(R_LEG);
   compensate_force_torque(L_LEG);
-  
+
   if (has_foot_ft_offsets_in_air)
     return;
-  
+
   // initialize walking engines with foot ft offsets
   if (!has_foot_ft_offsets_in_air)
   {
@@ -674,14 +688,14 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
       // get offsets
       MotionManager::GetInstance()->RightLegFTSensor.getForceTorqueBias(&right_foot_offset[0], &right_foot_offset[1], &right_foot_offset[2],
                                                                         &right_foot_offset[3], &right_foot_offset[4], &right_foot_offset[5]);
-      
+
       MotionManager::GetInstance()->LeftLegFTSensor.getForceTorqueBias(&left_foot_offset[0], &left_foot_offset[1], &left_foot_offset[2],
                                                                        &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
-      
-      ROS_INFO_STREAM("Initial values right foot: " << right_foot_offset[0] << " " << right_foot_offset[1] << " " << right_foot_offset[2] << " " 
+
+      ROS_INFO_STREAM("Initial values right foot: " << right_foot_offset[0] << " " << right_foot_offset[1] << " " << right_foot_offset[2] << " "
                                                     << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5]);
 
-      ROS_INFO_STREAM("Initial values left foot: " << left_foot_offset[0] << " " << left_foot_offset[1] << " " << left_foot_offset[2] << " " 
+      ROS_INFO_STREAM("Initial values left foot: " << left_foot_offset[0] << " " << left_foot_offset[1] << " " << left_foot_offset[2] << " "
                                                    << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5]);
 
       // set offsets at walking controllers
