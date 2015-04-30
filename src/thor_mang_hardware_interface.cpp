@@ -385,7 +385,7 @@ bool ThorMangHardwareInterface::goReadyPose()
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
       continue;
 
     int id = m_RobotInfo[joint_index].m_ID;
@@ -463,7 +463,7 @@ bool ThorMangHardwareInterface::goReadyPose()
 
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
       continue;
 
     int id = m_RobotInfo[joint_index].m_ID;
@@ -551,7 +551,7 @@ bool ThorMangHardwareInterface::goReadyPose()
       initJointPosition(joint_index,  outValue[11] + MotionManager::GetInstance()->m_Offset[25]);
 
     else if (id == 37)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[36]);
+      initJointPosition(joint_index,  2048 + MotionManager::GetInstance()->m_Offset[36]);
 
     usleep(1000);
   }
@@ -559,7 +559,7 @@ bool ThorMangHardwareInterface::goReadyPose()
   usleep(5000000);
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
       continue;
 
     int id = m_RobotInfo[joint_index].m_ID;
