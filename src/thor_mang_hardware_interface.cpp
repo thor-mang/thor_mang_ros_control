@@ -408,20 +408,6 @@ JointData* ThorMangHardwareInterface::getJoint(int id)
 
 bool ThorMangHardwareInterface::robotBringUp()
 {
-  ROS_INFO("Setting up Dynamixal Pro...");
-  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
-  {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 28 || m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM == 106)
-      continue;
-
-    int error = setIndirectAddress(joint_index);
-
-    if (error && error != 7)
-      ROS_ERROR("Error %d occured on ID %d", error, m_RobotInfo[joint_index].m_ID);
-
-    usleep(1000);
-  }
-
   ROS_INFO("Moving to initial pose...");
   if (!goReadyPose())
     return false;
@@ -617,75 +603,6 @@ bool ThorMangHardwareInterface::goReadyPose()
   }
 
   return true;
-}
-
-int ThorMangHardwareInterface::setIndirectAddress(unsigned int joint_index)
-{
-  int id = m_RobotInfo[joint_index].m_ID;
-  DXLComm* comm = m_RobotInfo[joint_index].m_DXL_Comm;
-  int error = 0;
-
-  //0
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_0_L, PRO54::P_PRESENT_POSITION_LL, &error);
-  if (error)
-    return error;
-
-  //1
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_1_L, PRO54::P_PRESENT_POSITION_LH, &error);
-  if (error)
-    return error;
-
-  //2
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_2_L, PRO54::P_PRESENT_POSITION_HL, &error);
-  if (error)
-    return error;
-
-  //3
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_3_L, PRO54::P_PRESENT_POSITION_HH, &error);
-  if (error)
-    return error;
-
-  //4
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_4_L, PRO54::P_EXTERNAL_PORT_DATA_1_L, &error);
-  if (error)
-    return error;
-
-  //5
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_5_L, PRO54::P_EXTERNAL_PORT_DATA_1_H, &error);
-  if (error)
-    return error;
-
-  //6
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_6_L, PRO54::P_EXTERNAL_PORT_DATA_2_L, &error);
-  if (error)
-    return error;
-
-  //7
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_7_L, PRO54::P_EXTERNAL_PORT_DATA_2_H, &error);
-  if (error)
-    return error;
-
-  //8
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_8_L, PRO54::P_EXTERNAL_PORT_DATA_3_L, &error);
-  if (error)
-    return error;
-
-  //9
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_9_L, PRO54::P_EXTERNAL_PORT_DATA_3_H, &error);
-  if (error)
-    return error;
-
-  //10
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_10_L, PRO54::P_EXTERNAL_PORT_DATA_4_L, &error);
-  if (error)
-    return error;
-
-  //11
-  comm->GetDXLInstance()->WriteWord(id, PRO54::P_INDIRECT_ADDRESS_11_L, PRO54::P_EXTERNAL_PORT_DATA_4_H, &error);
-  if (error)
-    return error;
-
-  return 0;
 }
 
 void ThorMangHardwareInterface::initJointPosition(unsigned int joint_index, int value)

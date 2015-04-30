@@ -162,7 +162,6 @@ protected:
   bool robotBringUp();
   bool goReadyPose();
 
-  int setIndirectAddress(unsigned int joint_index);
   void initJointPosition(unsigned int joint_index, int value);
   void initINS();
   void InitForceTorque();
