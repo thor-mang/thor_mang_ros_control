@@ -31,8 +31,6 @@
 
 #include <ros/ros.h>
 
-#include <boost/thread/mutex.hpp>
-
 #include <hardware_interface/internal/hardware_resource_manager.h>
 
 
@@ -44,20 +42,16 @@ class ThorMangFootstepsHandle
 public:
   ThorMangFootstepsHandle()
     : name("")
-    , dynamixel_mutex(NULL)
   {}
 
-  ThorMangFootstepsHandle(const std::string& name, boost::mutex* dynamixel_mutex)
+  ThorMangFootstepsHandle(const std::string& name)
     : name(name)
-    , dynamixel_mutex(dynamixel_mutex)
   {}
 
   std::string getName() const { return name; }
-  boost::mutex& getDynamixelMutex() const { return *dynamixel_mutex; }
 
 private:
   std::string name;
-  boost::mutex* dynamixel_mutex;
 };
 
 /** \brief Hardware interface to support reading the state of footstep parameters */

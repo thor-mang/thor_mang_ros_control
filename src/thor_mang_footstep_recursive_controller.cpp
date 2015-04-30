@@ -157,16 +157,14 @@ void ThorMangFootstepRecursiveController::InitWalking()
   //RecursiveWalking::GetInstance()->SetRefZMPDecisionParameter(0.0, 0.0, 10.0);
   //RecursiveWalking::GetInstance()->m_ReferenceGtoBodyPosition.z = 650.0;
 
-  boost::mutex::scoped_lock lock(footsteps_handle.getDynamixelMutex());
-
   // init servo gains
   for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
   {
     int id = MotionStatus::m_CurrentJoints[index].m_ID;
 
     int err;
-    MotionStatus::m_CurrentJoints[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
-    MotionStatus::m_CurrentJoints[index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
   }
 }
 

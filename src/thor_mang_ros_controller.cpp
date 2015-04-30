@@ -90,11 +90,7 @@ void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &emp
 void ThorMangRosControllerNode::update(ros::Time time, ros::Duration period)
 {
   // manually updates motion manager and modules of THOR-MANG
-  {
-    // manually lock dynamixel access for thor mang framework
-    boost::mutex::scoped_lock lock(ThorMangHardwareInterface::Instance()->getDynamixelMutex());
-    Thor::MotionManager::GetInstance()->Process();
-  }
+  Thor::MotionManager::GetInstance()->Process();
 
   // ros control update cycle
   ThorMangHardwareInterface::Instance()->read(time, period);
