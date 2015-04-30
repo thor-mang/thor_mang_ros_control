@@ -169,6 +169,7 @@ protected:
   void update_force_torque_compensation();
   void update_force_torque_sensors();
   void compensate_force_torque(unsigned int ft_sensor_index);
+  Thor::FTSensor& getFTSensorInstance(unsigned int sensor_id);
 
   static ThorMangHardwareInterface::Ptr singelton;
 

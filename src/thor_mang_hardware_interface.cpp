@@ -263,31 +263,31 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   robot_transforms.updateRootTransform(imu_orient_rot);
 
   // read FT-Sensors
-  force_raw[R_ARM][0] = MotionStatus::R_ARM_FX;
+  force_raw[R_ARM][0] = -MotionStatus::R_ARM_FX;
   force_raw[R_ARM][1] = MotionStatus::R_ARM_FY;
   force_raw[R_ARM][2] = MotionStatus::R_ARM_FZ;
-  torque_raw[R_ARM][0] = MotionStatus::R_ARM_TX;
+  torque_raw[R_ARM][0] = -MotionStatus::R_ARM_TX;
   torque_raw[R_ARM][1] = MotionStatus::R_ARM_TY;
   torque_raw[R_ARM][2] = MotionStatus::R_ARM_TZ;
 
-  force_raw[L_ARM][0] = MotionStatus::L_ARM_FX;
+  force_raw[L_ARM][0] = -MotionStatus::L_ARM_FX;
   force_raw[L_ARM][1] = MotionStatus::L_ARM_FY;
   force_raw[L_ARM][2] = MotionStatus::L_ARM_FZ;
-  torque_raw[L_ARM][0] = MotionStatus::L_ARM_TX;
+  torque_raw[L_ARM][0] = -MotionStatus::L_ARM_TX;
   torque_raw[L_ARM][1] = MotionStatus::L_ARM_TY;
   torque_raw[L_ARM][2] = MotionStatus::L_ARM_TZ;
 
-  force_raw[R_LEG][0] = MotionStatus::R_LEG_FX;
+  force_raw[R_LEG][0] = -MotionStatus::R_LEG_FX;
   force_raw[R_LEG][1] = MotionStatus::R_LEG_FY;
   force_raw[R_LEG][2] = MotionStatus::R_LEG_FZ;
-  torque_raw[R_LEG][0] = MotionStatus::R_LEG_TX;
+  torque_raw[R_LEG][0] = -MotionStatus::R_LEG_TX;
   torque_raw[R_LEG][1] = MotionStatus::R_LEG_TY;
   torque_raw[R_LEG][2] = MotionStatus::R_LEG_TZ;
 
-  force_raw[L_LEG][0] = MotionStatus::L_LEG_FX;
+  force_raw[L_LEG][0] = -MotionStatus::L_LEG_FX;
   force_raw[L_LEG][1] = MotionStatus::L_LEG_FY;
   force_raw[L_LEG][2] = MotionStatus::L_LEG_FZ;
-  torque_raw[L_LEG][0] = MotionStatus::L_LEG_TX;
+  torque_raw[L_LEG][0] = -MotionStatus::L_LEG_TX;
   torque_raw[L_LEG][1] = MotionStatus::L_LEG_TY;
   torque_raw[L_LEG][2] = MotionStatus::L_LEG_TZ;
 
@@ -591,7 +591,8 @@ bool ThorMangHardwareInterface::goReadyPose()
 
     if (error)
       ROS_ERROR("Error %d occured on ID %d", error, id);
-
+    for (unsigned int sensor_id = 0; sensor_id < MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
+      resetFtSensor(sensor_id);
     usleep(1000);
   }
 
@@ -678,6 +679,16 @@ void ThorMangHardwareInterface::update_force_torque_compensation()
   }
 }
 
+Thor::FTSensor& ThorMangHardwareInterface::getFTSensorInstance(unsigned int sensor_id) {
+  switch (sensor_id) {
+    case 0: return MotionManager::GetInstance()->RightArmFTSensor;
+    case 1: return MotionManager::GetInstance()->LeftArmFTSensor;
+    case 2: return MotionManager::GetInstance()->RightLegFTSensor;
+    case 3: return MotionManager::GetInstance()->LeftLegFTSensor;
+  }
+
+}
+
 void ThorMangHardwareInterface::update_force_torque_sensors()
 {
   compensate_force_torque(R_ARM);
@@ -747,7 +758,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
   torque_compensated[ft_sensor_index][2] = ft_compensated[5];
 
   // check if ft sensors are being reset
-  if (!has_ft_offsets[ft_sensor_index])
+  if (!has_ft_offsets[ft_sensor_index] && getFTSensorInstance(ft_sensor_index).hasBias())
   {
     // accumulate values and divide them later by num of measurements
     force_torque_offset[ft_sensor_index] += ft_compensated;
