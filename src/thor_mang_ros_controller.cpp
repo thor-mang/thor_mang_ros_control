@@ -99,8 +99,39 @@ void ThorMangRosControllerNode::update(ros::Time time, ros::Duration period)
 }
 }
 
+#include <sched.h>  // sched_*
+#include <string.h> // strerror
+#include <errno.h>  // errno
+
+void set_scheduling(int policy, int priority)
+{
+	                int  ret;
+	        const pid_t  pid    = 0;
+	 struct sched_param  param;
+
+	// Set priority
+	param.sched_priority = priority;
+
+	// Set scheduling, priority included
+	ret = sched_setscheduler(pid, policy, &param);
+	ROS_ERROR_COND(ret == -1, "sched_setscheduler: %s", strerror(errno));
+
+	// Read policy and print it, just to be sure it did its job right.
+	ret = sched_getscheduler(pid);
+	ROS_ERROR_COND(
+		ret != policy,
+		"Scheduler policy wasn't set correctly. "
+		"Should be %d, but is %d (%s).",
+		policy, ret,
+		(ret == SCHED_FIFO)  ? "SCHED_FIFO" :
+		(ret == SCHED_OTHER) ? "SCHED_OTHER" :  "???"
+	);
+}
+
 int main(int argc, char** argv)
 {
+  set_scheduling(SCHED_RR, 49); // Priority (second param) can be set to 0-99.
+
   ros::init(argc, argv, "thor_mang_ros_controller");
 
   ros::NodeHandle nh;
