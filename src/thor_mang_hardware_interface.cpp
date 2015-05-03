@@ -353,6 +353,16 @@ void ThorMangHardwareInterface::setTorqueOn(bool enable)
   }
 }
 
+void ThorMangHardwareInterface::enableLights(bool enable)
+{
+  if (enable)
+    ROS_INFO("Enable lights!");
+  else
+    ROS_INFO("Disable lights!");
+
+  MotionManager::GetInstance()->EnableLights(enable);
+}
+
 JointData* ThorMangHardwareInterface::getJoint(int id)
 {
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)

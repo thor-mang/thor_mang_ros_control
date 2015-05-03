@@ -134,6 +134,8 @@ public:
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
 
+  void enableLights(bool enable);
+
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
   typedef boost::shared_ptr<const ThorMangHardwareInterface> ConstPtr;

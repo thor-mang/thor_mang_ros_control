@@ -47,7 +47,7 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
   minIni* ini = new minIni(thor_mang_ini_file);
   Thor::MotionManager::GetInstance()->LoadINISettings(ini);
   delete ini;
-  
+
   ThorMangHardwareInterface::Instance()->enableTorqueOnStart(torque_on);
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
@@ -66,6 +66,7 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
 
   // subscribe topics
   torque_on_sub = nh.subscribe("torque_on", 1, &ThorMangRosControllerNode::setTorqueOn, this);
+  enable_lights_sub = nh.subscribe("enable_lights", 1, &ThorMangRosControllerNode::setTorqueOn, this);
 
   for (unsigned int sensor_id = 0; sensor_id < ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
     reset_ft_sub[sensor_id] = nh.subscribe<std_msgs::Empty>("reset_ft/" + ThorMangHardwareInterface::ftSensorUIDs[sensor_id], 1, boost::bind(&ThorMangRosControllerNode::resetFtSensor, this, _1, sensor_id));
@@ -80,6 +81,11 @@ ThorMangRosControllerNode::~ThorMangRosControllerNode()
 void ThorMangRosControllerNode::setTorqueOn(std_msgs::BoolConstPtr enable)
 {
   ThorMangHardwareInterface::Instance()->setTorqueOn(enable->data);
+}
+
+void ThorMangRosControllerNode::enableLights(std_msgs::BoolConstPtr enable)
+{
+  ThorMangHardwareInterface::Instance()->enableLights(enable->data);
 }
 
 void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id) {
