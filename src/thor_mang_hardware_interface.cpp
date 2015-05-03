@@ -322,8 +322,7 @@ void ThorMangHardwareInterface::setJointStateRate(double joint_state_rate)
 
 void ThorMangHardwareInterface::enableTorqueOnStart(bool enable)
 {
-  if (!enable)
-    ROS_WARN("Disabled torque on start!");
+  ROS_WARN_COND(!enable, "Disabled torque on start!");
   torque_on_start = enable;
 }
 
@@ -404,14 +403,13 @@ bool ThorMangHardwareInterface::goReadyPose()
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error);
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 2000, &error);
 
-    if (error)
-      ROS_ERROR("Error %d occured on ID %d", error, id);
+    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
 
     usleep(1000);
   }
 
   // compute trajectory
-  ROS_WARN("Compute trajectory to initial pose.");
+  ROS_INFO("Compute trajectory to initial pose.");
 
   int dir_output[16];
   double InitAngle[16];
@@ -482,8 +480,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     if (id >= 15 && id <= 26)
       m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteWord(id, PRO54::P_VELOCITY_I_GAIN_L, 0, &error);
 
-    if (error)
-      ROS_ERROR("Error %d occured on ID %d", error, id);
+    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
 
     usleep(1000);
   }
@@ -578,8 +575,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &error);
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &error);
 
-    if (error)
-      ROS_ERROR("Error %d occured on ID %d", error, id);
+    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
 
     usleep(1000);
   }
