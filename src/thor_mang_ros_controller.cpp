@@ -70,7 +70,7 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
 
   // subscribe topics
   torque_on_sub = nh.subscribe("torque_on", 1, &ThorMangRosControllerNode::setTorqueOn, this);
-  enable_lights_sub = nh.subscribe("enable_lights", 1, &ThorMangRosControllerNode::setTorqueOn, this);
+  enable_lights_sub = nh.subscribe("enable_lights", 1, &ThorMangRosControllerNode::enableLights, this);
 
   for (unsigned int sensor_id = 0; sensor_id < ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
     reset_ft_sub[sensor_id] = nh.subscribe<std_msgs::Empty>("reset_ft/" + ThorMangHardwareInterface::ftSensorUIDs[sensor_id], 1, boost::bind(&ThorMangRosControllerNode::resetFtSensor, this, _1, sensor_id));
