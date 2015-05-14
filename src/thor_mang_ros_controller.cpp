@@ -49,12 +49,16 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
 
   // Initialize THOR-MANG Framework
   minIni* ini = new minIni(thor_mang_ini_file);
-  Thor::MotionManager::GetInstance()->LoadINISettings(ini);
-  delete ini;
-
+  Thor::MotionManager::GetInstance()->LoadPortSettings(ini);
+  Thor::MotionManager::GetInstance()->LoadFtSensorSettings(ini);
   ThorMangHardwareInterface::Instance()->enableTorqueOnStart(torque_on);
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
+    Thor::MotionManager::GetInstance()->LoadOffsetSettings(ini);
+    for (unsigned int i = 0; i < MotionStatus::m_CurrentJoints.size(); i++) {
+      ROS_WARN_STREAM("ID=" << i << " Offset=" << Thor::MotionManager::GetInstance()->m_Offset[i]);
+    }
+    delete ini;
     ThorMangHardwareInterface::Instance()->setJointStateRate(joint_state_rate);
     Thor::MotionManager::GetInstance()->AddModule(ThorMangHardwareInterface::Instance().get());
     //Thor::MotionManager::GetInstance()->StartTimer(); // sadly crashes
