@@ -23,6 +23,10 @@
             force_torque_sensor_controller
             waist_lidar_controller"/>
 
+    <node name="walking_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+      args="--stopped step_controller
+	    step_manipulate_controller"/>
+
     <!-- Load trajectory controllers -->
     <include file="$(find thor_mang_ros_control)/launch/load_trajectory_controllers.launch">
       <arg name="namespace" value="$(arg namespace)" />
