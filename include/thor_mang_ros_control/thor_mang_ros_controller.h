@@ -53,11 +53,13 @@ protected:
   void setTorqueOn(std_msgs::BoolConstPtr enable);
   void enableLights(std_msgs::BoolConstPtr enable);
   void resetFtSensor(const std_msgs::EmptyConstPtr& empty_ptr, unsigned int sensor_id);
+  void measureFtScaling(const std_msgs::EmptyConstPtr& empty_ptr);
 
   // subscriber
   ros::Subscriber torque_on_sub;
   ros::Subscriber enable_lights_sub;
   ros::Subscriber reset_ft_sub[ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS];
+  ros::Subscriber measure_scaling_sub;
 
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager;
 };

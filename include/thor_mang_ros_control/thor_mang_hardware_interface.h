@@ -147,6 +147,7 @@ public:
   static const std::string ftSensorUIDs[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   void resetFtSensor(unsigned int sensor_id);
+  void measureFTScaling();
 
 protected:
   ThorMangHardwareInterface();
@@ -219,6 +220,7 @@ protected:
   unsigned int num_ft_measurements[MAXIMUM_NUMBER_OF_FT_SENSORS];
   bool has_ft_offsets[MAXIMUM_NUMBER_OF_FT_SENSORS];
   bool has_foot_ft_offsets_in_air;
+  bool has_foot_ft_scaling;
 
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 

@@ -101,6 +101,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(false)
   , torque_on_start(false)
+  , has_foot_ft_scaling(true)
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
@@ -634,6 +635,13 @@ void ThorMangHardwareInterface::InitForceTorque()
   }
 }
 
+void ThorMangHardwareInterface::measureFTScaling() {
+  MotionManager::GetInstance()->RightLegFTSensor.measureScaling(250.0);
+  MotionManager::GetInstance()->LeftLegFTSensor.measureScaling(250.0);
+  has_foot_ft_scaling = false;
+  ROS_INFO_STREAM("Starting foot FT scaling measurement.");
+}
+
 void ThorMangHardwareInterface::resetFtSensor(unsigned int sensor_id)
 {
   if (sensor_id < 0 || sensor_id >= MAXIMUM_NUMBER_OF_FT_SENSORS)
@@ -713,7 +721,21 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
                                                                left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
 
       has_foot_ft_offsets_in_air = true;
-      ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+    }
+  }
+  if (!has_foot_ft_scaling) {
+    if (MotionManager::GetInstance()->RightLegFTSensor.hasScaling() && MotionManager::GetInstance()->LeftLegFTSensor.hasScaling()){
+      double left_scaling[6];
+      double right_scaling[6];
+      MotionManager::GetInstance()->RightLegFTSensor.getForceTorqueScaling(&right_scaling[0], &right_scaling[1], &right_scaling[2],
+          &right_scaling[3], &right_scaling[4], &right_scaling[5]);
+      MotionManager::GetInstance()->LeftLegFTSensor.getForceTorqueScaling(&left_scaling[0], &left_scaling[1], &left_scaling[2],
+          &left_scaling[3], &left_scaling[4], &left_scaling[5]);
+      ROS_INFO_STREAM("Measured scaling values left: " << left_scaling[0] << " " << left_scaling[1] << " " << left_scaling[2] << " " <<
+                                                          left_scaling[3] << " " << left_scaling[4] << " " << left_scaling[5]);
+      ROS_INFO_STREAM("Measured scaling values right: " << right_scaling[0] << " " << right_scaling[1] << " " << right_scaling[2] << " " <<
+                                                          right_scaling[3] << " " << right_scaling[4] << " " << right_scaling[5]);
+      has_foot_ft_scaling = true;
     }
   }
 }
@@ -750,7 +772,10 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
       has_ft_offsets[ft_sensor_index] = true;
       // set offset
       ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
-      ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
+      ROS_INFO_STREAM("FT bias for " << ftSensorUIDs[ft_sensor_index] << force_torque_offset[ft_sensor_index](0) << " "  << force_torque_offset[ft_sensor_index](1) << " "
+                      << force_torque_offset[ft_sensor_index](2) << " "  << force_torque_offset[ft_sensor_index](3) << " "  << force_torque_offset[ft_sensor_index](4) << " "
+                      << force_torque_offset[ft_sensor_index](5) <<  ".");
+      ROS_INFO_THROTTLE(1, "Robot calibration finished! You can place the robot on ground now.");
     }
   }
 }

@@ -79,6 +79,8 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
   for (unsigned int sensor_id = 0; sensor_id < ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
     reset_ft_sub[sensor_id] = nh.subscribe<std_msgs::Empty>("reset_ft/" + ThorMangHardwareInterface::ftSensorUIDs[sensor_id], 1, boost::bind(&ThorMangRosControllerNode::resetFtSensor, this, _1, sensor_id));
 
+  measure_scaling_sub = nh.subscribe<std_msgs::Empty>("measure_scaling", 1, &ThorMangRosControllerNode::measureFtScaling, this);
+
   ROS_INFO("Initialization of ros controller completed!");
 }
 
@@ -99,6 +101,10 @@ void ThorMangRosControllerNode::enableLights(std_msgs::BoolConstPtr enable)
 void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id) {
   ROS_INFO_STREAM("Resetting " << ThorMangHardwareInterface::ftSensorUIDs[sensor_id] << " ft sensor.");
   ThorMangHardwareInterface::Instance()->resetFtSensor(sensor_id);
+}
+
+void ThorMangRosControllerNode::measureFtScaling(const std_msgs::EmptyConstPtr& empty_ptr) {
+  ThorMangHardwareInterface::Instance()->measureFTScaling();
 }
 
 void ThorMangRosControllerNode::update(ros::Time time, ros::Duration period)
