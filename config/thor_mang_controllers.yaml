@@ -1,10 +1,16 @@
 #thor:
 # footstep controller ---------------------------------------
-  footstep_preview_controller:
+  step_controller:
     type: Thor/ThorMangFootstepPreviewController
-    execute_step_plan_topic: execute_step_plan
+    execute_step_plan_topic: 'execute_step_plan'
+    arms: true
+
+  step_manipulate_controller:
+    type: Thor/ThorMangFootstepPreviewController
+    execute_step_plan_topic: 'execute_step_plan'
+    arms: false
 
   footstep_recursive_controller:
     type: Thor/ThorMangFootstepRecursiveController
-    execute_step_plan_topic: execute_step_plan
+    execute_step_plan_topic: 'execute_step_plan'
 

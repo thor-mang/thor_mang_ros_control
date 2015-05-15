@@ -45,21 +45,21 @@
 #include <vigir_footstep_planning_msgs/footstep_planning_msgs.h>
 
 #include <thor_mang_footstep_planning_msgs/thor_mang_step_plan_msg_plugin.h>
-#include <thor_mang_ros_control/thor_mang_footstep_interface.h>
+#include <hardware_interface/joint_command_interface.h>
 
 
 
 namespace Thor
 {
 class ThorMangFootstepPreviewController
-  : public controller_interface::Controller<hardware_interface::ThorMangFootstepInterface>
+  : public controller_interface::Controller<hardware_interface::JointCommandInterface>
   , public MotionModule
 {
 public:
   ThorMangFootstepPreviewController();
 
   // ros control
-  bool init(hardware_interface::ThorMangFootstepInterface* hw, ros::NodeHandle& nh);
+  bool init(hardware_interface::JointCommandInterface* hw, ros::NodeHandle& nh);
 
   void update(const ros::Time& time, const ros::Duration& period);
 
@@ -77,15 +77,16 @@ protected:
   void InitFtDataOnGround();
 
   void InitWalking();
-  void SetMotionEnableList();
+  void claimJoints();
+  void unclaimJoints();
+
+  bool claim_arms;
 
   // action server calls
   void executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as);
 
   // action servers
   vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr execute_step_plan_as;
-
-  hardware_interface::ThorMangFootstepsHandle footsteps_handle;
 
   // time measurement to get current rate
   ros::Time last_call;

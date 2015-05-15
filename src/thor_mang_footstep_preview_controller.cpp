@@ -1,23 +1,77 @@
 #include <thor_mang_ros_control/thor_mang_footstep_preview_controller.h>
 
+const unsigned int joint_count = 37;
+
+const std::string jointUIDs[] =
+{
+  "r_shoulder_pitch",
+  "l_shoulder_pitch",
+  "r_shoulder_roll",
+  "l_shoulder_roll",
+  "r_shoulder_yaw",
+  "l_shoulder_yaw",
+  "r_elbow",
+  "l_elbow",
+  "r_wrist_yaw1",
+  "l_wrist_yaw1",
+  "r_wrist_roll",
+  "l_wrist_roll",
+  "r_wrist_yaw2",
+  "l_wrist_yaw2",
+  "r_hip_yaw",
+  "l_hip_yaw",
+  "r_hip_roll",
+  "l_hip_roll",
+  "r_hip_pitch",
+  "l_hip_pitch",
+  "r_knee",
+  "l_knee",
+  "r_ankle_pitch",
+  "l_ankle_pitch",
+  "r_ankle_roll",
+  "l_ankle_roll",
+  "waist_pan",
+  "waist_tilt",
+  "head_pan",
+  "head_tilt",
+  "r_f0_j0",        // r_hand_thumb
+  "l_f0_j0",        // l_hand_thumb
+  "r_f1_j0",        // r_hand_index_finger
+  "l_f1_j0",        // l_hand_index_finger
+  "r_hand_middle_finger",
+  "l_hand_middle_finger",
+  "waist_lidar"
+};
+
 namespace Thor
 {
 ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
-  : system_control_unit_time_sec(MotionModule::TIME_UNIT)
+  : system_control_unit_time_sec(MotionModule::TIME_UNIT),
+    claim_arms(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
 }
 
-bool ThorMangFootstepPreviewController::init(hardware_interface::ThorMangFootstepInterface* hw, ros::NodeHandle& nh)
-{
-  footsteps_handle = hw->getHandle("footsteps_handle");
+bool ThorMangFootstepPreviewController::init(hardware_interface::JointCommandInterface *hw, ros::NodeHandle& nh) {
+  // Load params
+  std::string execute_step_plan_topic;
+  nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
+  nh.param("arms", claim_arms, true);
 
+  // Claim all joints needed by robotis
+  for (unsigned int id = 1; id < joint_count+1; id++) {
+    if((id >= 15 && id <=26) || claim_arms && (id == 1 || id ==2 || id == 7|| id == 8)) {
+      try {
+        hw->getHandle(jointUIDs[id-1]);
+      } catch (hardware_interface::HardwareInterfaceException e) {
+        ROS_ERROR_STREAM("[PreviewWalking] Can't find joint '" << jointUIDs[id-1] << "' in hardware interface. Error: " << e.what());
+        return false;
+      }
+    }
+  }
   PreviewControlWalking::GetInstance()->SetInitialPose(0.0, -125.0,   0.0, 0.0, 0.0, 0.0,
                                                        0.0,  125.0,   0.0, 0.0, 0.0, 0.0,
                                                        0.0,    0.0, 650.0, 0.0, 0.0, 0.0);
-
-  std::string execute_step_plan_topic;
-  nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
 
   // init action servers
   execute_step_plan_as = vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::create(nh, execute_step_plan_topic, true, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)));
@@ -31,15 +85,23 @@ void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros:
 
 void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 {
-  ROS_WARN_NAMED(footsteps_handle.getName(), "Controller '%s' is starting.", uID);
+  ROS_INFO("Controller '%s' is starting.", uID);
   MotionManager::GetInstance()->AddModule(this);
+  claimJoints();
+
+  ROS_INFO("Init IMU data");
+  InitImuData();
+
+  ROS_INFO("Init FT data");
+  InitFtDataOnGround();
 }
 
 void ThorMangFootstepPreviewController::stopping(const ros::Time& time)
 {
-  ROS_WARN_NAMED(footsteps_handle.getName(), "Controller '%s' stopping.", uID);
+  ROS_INFO("Controller '%s' stopping.", uID);
   PreviewControlWalking::GetInstance()->Stop();
   Thor::MotionManager::GetInstance()->RemoveModule(this);
+  unclaimJoints();
 }
 
 void ThorMangFootstepPreviewController::Initialize()
@@ -192,30 +254,29 @@ void ThorMangFootstepPreviewController::InitWalking()
 
 void ThorMangFootstepPreviewController::StartWalking()
 {
-  SetMotionEnableList();
   if(!PreviewControlWalking::GetInstance()->IsRunning())
     PreviewControlWalking::GetInstance()->Start();
 }
 
-void ThorMangFootstepPreviewController::SetMotionEnableList()
+void ThorMangFootstepPreviewController::claimJoints()
 {
   for(unsigned int jointIndex = 0; jointIndex < 35; jointIndex++)
   {
     int id = jointIndex;
-
-    //not be fixed code
     if(id >= 15 && id <=26)
     {
       MotionStatus::m_EnableList[id-1].uID = uID;
     }
-    if(id == 1 || id ==2 || id == 7|| id == 8)
+    if(claim_arms && (id == 1 || id ==2 || id == 7|| id == 8))
       MotionStatus::m_EnableList[id-1].uID = uID;
   }
+}
 
-  MotionStatus::m_EnableList[27 - 1].uID = const_cast<char*>("Action");
-  MotionStatus::m_EnableList[28 - 1].uID = const_cast<char*>("Action");
-  MotionStatus::m_EnableList[29 - 1].uID = const_cast<char*>("Action");
-  MotionStatus::m_EnableList[30 - 1].uID = const_cast<char*>("Action");
+void ThorMangFootstepPreviewController::unclaimJoints() {
+  for (unsigned int id = 1; id < joint_count+1; id++) {
+    if((id >= 15 && id <=26) || id == 1 || id ==2 || id == 7|| id == 8)
+      MotionStatus::m_EnableList[id-1].uID = const_cast<char*>("thor_mang_hardware_interface");
+  }
 }
 
 void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as)
@@ -225,12 +286,6 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 
   ROS_INFO("Preparing for start walking...");
   InitWalking();
-
-  ROS_INFO("Init IMU data");
-  InitImuData();
-
-  ROS_INFO("Init FT data");
-  InitFtDataOnGround();
 
   Thor::StepData ref_step_data;
   PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
@@ -256,7 +311,7 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
   }
 
   ROS_INFO("Start walking!");
-  ThorMangFootstepPreviewController::StartWalking();
+  StartWalking();
 
   while(PreviewControlWalking::GetInstance()->IsRunning())
     usleep(8000);
