@@ -52,7 +52,7 @@ ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
 }
 
-bool ThorMangFootstepPreviewController::init(hardware_interface::JointCommandInterface *hw, ros::NodeHandle& nh) {
+bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh) {
   // Load params
   std::string execute_step_plan_topic;
   nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));

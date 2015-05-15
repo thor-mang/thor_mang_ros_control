@@ -52,14 +52,14 @@
 namespace Thor
 {
 class ThorMangFootstepPreviewController
-  : public controller_interface::Controller<hardware_interface::JointCommandInterface>
+  : public controller_interface::Controller<hardware_interface::PositionJointInterface>
   , public MotionModule
 {
 public:
   ThorMangFootstepPreviewController();
 
   // ros control
-  bool init(hardware_interface::JointCommandInterface* hw, ros::NodeHandle& nh);
+  bool init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh);
 
   void update(const ros::Time& time, const ros::Duration& period);
 
