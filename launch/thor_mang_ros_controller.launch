@@ -22,8 +22,10 @@
       args="joint_state_controller
             imu_sensor_controller
             force_torque_sensor_controller
-            waist_lidar_controller
-            --stopped step_controller
+            waist_lidar_controller"/>
+
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+      args="--stopped step_controller
 	    step_manipulate_controller"/>
 
     <!-- Load trajectory controllers -->
