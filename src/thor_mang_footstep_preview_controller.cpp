@@ -191,7 +191,7 @@ void ThorMangFootstepPreviewController::InitWalking()
   PreviewControlWalking::GetInstance()->Initialize(); /// TODO: Shouldn't be necessary
 
   PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO = 3.0;//3.5;
-  PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = 0.0;//7.31*0.01;
+  PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = 7.31*0.01;
   PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO = 0.4;
 
   PreviewControlWalking::GetInstance()->BALANCE_X_GAIN     = +1.0*20.30*0.625*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
