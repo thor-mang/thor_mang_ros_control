@@ -19,11 +19,12 @@
     <rosparam file="$(find vigir_force_torque_compensation_lib)/config/thor_vt_data.yaml" command="load" />
 
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
-      args="footstep_preview_controller
-            joint_state_controller
+      args="joint_state_controller
             imu_sensor_controller
             force_torque_sensor_controller
-            waist_lidar_controller"/>
+            waist_lidar_controller
+            --stopped step_controller
+	    step_manipulate_controller"/>
 
     <!-- Load trajectory controllers -->
     <include file="$(find thor_mang_ros_control)/launch/load_trajectory_controllers.launch">

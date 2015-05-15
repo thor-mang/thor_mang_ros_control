@@ -18,9 +18,7 @@
     <rosparam file="$(find vigir_force_torque_compensation_lib)/config/thor_ft_compensation_data.yaml" command="load" />
 
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
-      args="step_controller
-	    step_manipulate_controller
-            joint_state_controller
+      args="joint_state_controller
             imu_sensor_controller
             force_torque_sensor_controller
             waist_lidar_controller"/>
