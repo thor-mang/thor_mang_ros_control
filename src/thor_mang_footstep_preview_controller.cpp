@@ -323,7 +323,21 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 
 void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level)
 {
-  hip_pitch_offset = config.hip_pitch_offset;
+    hip_pitch_offset = config.hip_pitch_offset;
+    ankle_pitch_offset = config.ankle_pitch_offset;
+    walk_stabilizer_gain_ratio = config.walk_stabilizer_gain_ratio;
+    imu_gyro_gain_ratio = config.imu_gyro_gain_ratio;
+    force_moment_distribution_ratio = config.force_moment_distribution_ratio;
+    balance_hip_pitch_gain = config.balance_hip_pitch_gain;
+    balance_z_gain_by_ft = config.balance_z_gain_by_ft;
+    balance_right_roll_gain_by_ft = config.balance_right_roll_gain_by_ft;
+    balance_right_pitch_gain_by_ft = config.balance_right_pitch_gain_by_ft;
+    balance_left_roll_gain_by_ft = config.balance_left_roll_gain_by_ft;
+    balance_left_pitch_gain_by_ft = config.balance_left_pitch_gain_by_ft;
+    foot_landing_offset_gain = config.foot_landing_offset_gain;
+    foot_landing_detect_n = config.foot_landing_detect_n;
+
+    initWalkingParameters();
 
 }
 
