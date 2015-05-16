@@ -69,6 +69,7 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
       }
     }
   }
+  initWalkingParameters();
   PreviewControlWalking::GetInstance()->SetInitialPose(0.0, -125.0,   0.0, 0.0, 0.0, 0.0,
                                                        0.0,  125.0,   0.0, 0.0, 0.0, 0.0,
                                                        0.0,    0.0, 650.0, 0.0, 0.0, 0.0);
@@ -178,7 +179,7 @@ void ThorMangFootstepPreviewController::InitFtDataOnGround()
                                                                 left_tx_on_gnd_N, left_ty_on_gnd_N, left_tz_on_gnd_N);
 }
 
-void ThorMangFootstepPreviewController::InitWalking()
+void ThorMangFootstepPreviewController::initWalkingParameters()
 {
   ROS_INFO("Estimating system control time: %f", system_control_unit_time_sec);
 
@@ -283,9 +284,6 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 {
   const vigir_footstep_planning::msgs::ExecuteStepPlanGoalConstPtr& goal(as->acceptNewGoal());
   vigir_footstep_planning::msgs::StepPlan step_plan = goal->step_plan;
-
-  ROS_INFO("Preparing for start walking...");
-  InitWalking();
 
   Thor::StepData ref_step_data;
   PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
