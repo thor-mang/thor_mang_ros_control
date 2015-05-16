@@ -76,7 +76,7 @@ protected:
   void InitImuData();
   void InitFtDataOnGround();
 
-  void InitWalking();
+  void initWalkingParameters();
   void claimJoints();
   void unclaimJoints();
 
