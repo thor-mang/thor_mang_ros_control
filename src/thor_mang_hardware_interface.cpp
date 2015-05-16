@@ -214,6 +214,8 @@ void ThorMangHardwareInterface::Initialize()
   }
 
   robot_transforms.init();
+	state_estimator.init(ros::NodeHandle("state_estimator"));
+	state_estimator.setRobotTransforms(robot_transforms);
 }
 
 void ThorMangHardwareInterface::Process()
@@ -294,6 +296,10 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // apply compensation
   update_force_torque_compensation();
   update_force_torque_sensors();
+
+	state_estimator.setIMU(imu_orientation, imu_angular_velocity, imu_linear_acceleration);
+	state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
+	state_estimator.update();
 }
 
 void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
