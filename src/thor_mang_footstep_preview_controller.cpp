@@ -50,6 +50,7 @@ ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
     claim_arms(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
+  dyn_rec_server_.setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
 }
 
 bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh) {
@@ -187,13 +188,13 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->BALANCE_ENABLE = true;
   PreviewControlWalking::GetInstance()->DEBUG_PRINT = false;
 
-  PreviewControlWalking::GetInstance()->HIP_PITCH_OFFSET = 7.0;//6.0
-  PreviewControlWalking::GetInstance()->ANKLE_PITCH_OFFSET = 0.0;
+  PreviewControlWalking::GetInstance()->HIP_PITCH_OFFSET = hip_pitch_offset;//7.0;//6.0
+  PreviewControlWalking::GetInstance()->ANKLE_PITCH_OFFSET = ankle_pitch_offset;//0.0;
   PreviewControlWalking::GetInstance()->Initialize(); /// TODO: Shouldn't be necessary
 
-  PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO = 3.0;//3.5;
-  PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = 7.31*0.01;
-  PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO = 0.4;
+  PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO = walk_stabilizer_gain_ratio;//3.0;//3.5;
+  PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = imu_gyro_gain_ratio; // 7.31*0.01;
+  PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO = force_moment_distribution_ratio;//0.4;
 
   PreviewControlWalking::GetInstance()->BALANCE_X_GAIN     = +1.0*20.30*0.625*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
   PreviewControlWalking::GetInstance()->BALANCE_Y_GAIN     = -1.0*20.30*0.75*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
@@ -202,14 +203,14 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->BALANCE_PITCH_GAIN = -1.0*0.06*0.625*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
   PreviewControlWalking::GetInstance()->BALANCE_ROLL_GAIN  = -1.0*0.10*0.75*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
 
-  PreviewControlWalking::GetInstance()->BALANCE_HIP_PITCH_GAIN = 1.0;
-  PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN_BY_FT = 0.1*0.5;
+  PreviewControlWalking::GetInstance()->BALANCE_HIP_PITCH_GAIN = balance_hip_pitch_gain;//1.0;
+  PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN_BY_FT = balance_z_gain_by_ft ;//0.1*0.5;
 
-  PreviewControlWalking::GetInstance()->BALANCE_RIGHT_ROLL_GAIN_BY_FT = 0.01*0.1;
-  PreviewControlWalking::GetInstance()->BALANCE_RIGHT_PITCH_GAIN_BY_FT = -0.01*0.1*0.5;
+  PreviewControlWalking::GetInstance()->BALANCE_RIGHT_ROLL_GAIN_BY_FT = balance_right_roll_gain_by_ft;//0.01*0.1;
+  PreviewControlWalking::GetInstance()->BALANCE_RIGHT_PITCH_GAIN_BY_FT = balance_right_pitch_gain_by_ft;//-0.01*0.1*0.5;
 
-  PreviewControlWalking::GetInstance()->BALANCE_LEFT_ROLL_GAIN_BY_FT = 0.01*0.1;
-  PreviewControlWalking::GetInstance()->BALANCE_LEFT_PITCH_GAIN_BY_FT = -0.01*0.1*0.5;
+  PreviewControlWalking::GetInstance()->BALANCE_LEFT_ROLL_GAIN_BY_FT = balance_left_roll_gain_by_ft;//0.01*0.1;
+  PreviewControlWalking::GetInstance()->BALANCE_LEFT_PITCH_GAIN_BY_FT = balance_left_pitch_gain_by_ft;//-0.01*0.1*0.5;
 
   PreviewControlWalking::GetInstance()->AXIS_CONTROLLER_GAIN = 0.0;
 
@@ -224,8 +225,8 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 
   PreviewControlWalking::GetInstance()->AXIS_CONTROLLER_TIME_CONSTANT = 0.01;
 
-  PreviewControlWalking::GetInstance()->FOOT_LANDING_OFFSET_GAIN =   +1.0*0;
-  PreviewControlWalking::GetInstance()->FOOT_LANDING_DETECT_N = 50;
+  PreviewControlWalking::GetInstance()->FOOT_LANDING_OFFSET_GAIN =   foot_landing_offset_gain;//+1.0*0;
+  PreviewControlWalking::GetInstance()->FOOT_LANDING_DETECT_N = foot_landing_detect_n;//50;
 
   PreviewControlWalking::GetInstance()->SYSTEM_CONTROL_UNIT_TIME_SEC = MotionModule::TIME_UNIT / 1000.0;
   PreviewControlWalking::GetInstance()->FOOT_LANDING_DETECTION_TIME_MAX_SEC = 10.0;
@@ -319,6 +320,13 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
   vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
   as->setSucceeded(result);
 }
+
+void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level)
+{
+  hip_pitch_offset = config.hip_pitch_offset;
+
+}
+
 }
 
 PLUGINLIB_EXPORT_CLASS(Thor::ThorMangFootstepPreviewController, controller_interface::ControllerBase)

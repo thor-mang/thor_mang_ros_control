@@ -20,11 +20,14 @@ find_package(catkin REQUIRED COMPONENTS
   vigir_force_torque_compensation_lib
   thor_mang_footstep_planning_msgs
   robot_transforms
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+generate_dynamic_reconfigure_options(
+  cfg/FootstepPreviewController.cfg
+)
 # THOR-OP interface library
 include_directories(../thor_mang_libs/include)
 include_directories(../thor_mang_libs/include/framework)
