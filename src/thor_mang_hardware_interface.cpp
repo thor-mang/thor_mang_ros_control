@@ -213,9 +213,10 @@ void ThorMangHardwareInterface::Initialize()
     ft_compensation[sensorIndex].initGravityPublisher(ftSensorUIDs[sensorIndex] + "_gravity", ftSensorUIDs[sensorIndex]);
   }
 
-  robot_transforms.init();
+	robot_transforms_ptr.reset(new robot_tools::RobotTransforms());
+	robot_transforms_ptr->init();
 	state_estimator.init(ros::NodeHandle("state_estimator"));
-	state_estimator.setRobotTransforms(robot_transforms);
+	state_estimator.setRobotTransforms(robot_transforms_ptr);
 }
 
 void ThorMangHardwareInterface::Process()
@@ -240,7 +241,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
 
   // Update Robot state
   for (unsigned int i = 0; i < 30; i++) // iterate over all body joints
-    robot_transforms.updateState(jointUIDs[i], pos[i]);
+		robot_transforms_ptr->updateState(jointUIDs[i], pos[i]);
 
   // read IMU and transform it to pelvis frame
   tf::Quaternion imu_orient;
@@ -270,7 +271,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // Update robot state root transform
   Eigen::Affine3d imu_orient_rot(Eigen::Quaternion<double>(imu_orientation[3], imu_orientation[0], imu_orientation[1], imu_orientation[2]));
   imu_orient_rot.translation()  = Eigen::Vector3d::Zero();
-  robot_transforms.updateRootTransform(imu_orient_rot);
+	robot_transforms_ptr->updateRootTransform(imu_orient_rot);
 
   // read FT-Sensors
   force_raw[R_ARM][0] = -MotionStatus::R_ARM_FX;
@@ -668,7 +669,7 @@ void ThorMangHardwareInterface::update_force_torque_compensation()
 {
   for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
   {
-    Eigen::Matrix3d world_gripper_rot = (robot_transforms.getRootTransform().rotation() * robot_transforms.getTransform(ftSensorUIDs[i]).rotation()).inverse();
+		Eigen::Matrix3d world_gripper_rot = (robot_transforms_ptr->getRootTransform().rotation() * robot_transforms_ptr->getTransform(ftSensorUIDs[i]).rotation()).inverse();
     ft_compensation[i].setWorldGripperRotation(world_gripper_rot);
   }
 }
