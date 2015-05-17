@@ -50,7 +50,7 @@ ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
 		claim_arms(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
-  ros::NodeHandle nh_dy_rec("/footstep_preview_controller");
+  ros::NodeHandle nh_dy_rec("~/footstep_preview_controller");
 
   dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_(nh_dy_rec);
   dyn_rec_server_.setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
