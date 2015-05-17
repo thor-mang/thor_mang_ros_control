@@ -47,6 +47,9 @@
 #include <thor_mang_footstep_planning_msgs/thor_mang_step_plan_msg_plugin.h>
 #include <hardware_interface/joint_command_interface.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <thor_mang_ros_control/FootstepPreviewControllerConfig.h>
+
 
 
 namespace Thor
@@ -81,6 +84,19 @@ protected:
   void unclaimJoints();
 
   bool claim_arms;
+  double hip_pitch_offset;
+  double ankle_pitch_offset;
+  double walk_stabilizer_gain_ratio;
+  double imu_gyro_gain_ratio;
+  double force_moment_distribution_ratio;
+  double balance_hip_pitch_gain;
+  double balance_z_gain_by_ft;
+  double balance_right_roll_gain_by_ft;
+  double balance_right_pitch_gain_by_ft;
+  double balance_left_roll_gain_by_ft;
+  double balance_left_pitch_gain_by_ft;
+  double foot_landing_offset_gain;
+  double foot_landing_detect_n;
 
   // action server calls
   void executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as);
@@ -88,9 +104,15 @@ protected:
   // action servers
   vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr execute_step_plan_as;
 
+  //dyn_reconfigure_callback
+  void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
+
   // time measurement to get current rate
   ros::Time last_call;
   double system_control_unit_time_sec;
+
+  //dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_;
+
 };
 }
 
