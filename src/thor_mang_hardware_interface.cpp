@@ -214,9 +214,9 @@ void ThorMangHardwareInterface::Initialize()
   }
 
 	robot_transforms_ptr.reset(new robot_tools::RobotTransforms());
+	state_estimator.setRobotTransforms(robot_transforms_ptr);
 	robot_transforms_ptr->init();
 	state_estimator.init(ros::NodeHandle("state_estimator"));
-	state_estimator.setRobotTransforms(robot_transforms_ptr);
 }
 
 void ThorMangHardwareInterface::Process()
