@@ -111,7 +111,7 @@ protected:
   ros::Time last_call;
   double system_control_unit_time_sec;
 
-  dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_;
+  //dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_;
 
 };
 }
