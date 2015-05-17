@@ -88,13 +88,12 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 {
   ROS_INFO("Controller '%s' is starting.", uID);
   MotionManager::GetInstance()->AddModule(this);
+	ROS_INFO("Init IMU data");
+	InitImuData();
+
+	ROS_INFO("Init FT data");
+	InitFtDataOnGround();
   claimJoints();
-
-  ROS_INFO("Init IMU data");
-  InitImuData();
-
-  ROS_INFO("Init FT data");
-  InitFtDataOnGround();
 }
 
 void ThorMangFootstepPreviewController::stopping(const ros::Time& time)
@@ -255,6 +254,7 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 
 void ThorMangFootstepPreviewController::StartWalking()
 {
+	PreviewControlWalking::GetInstance()->Initialize();
   if(!PreviewControlWalking::GetInstance()->IsRunning())
     PreviewControlWalking::GetInstance()->Start();
 }
