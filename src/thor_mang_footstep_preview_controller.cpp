@@ -95,6 +95,7 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 	ROS_INFO("Init FT data");
 	InitFtDataOnGround();
 	claimJoints();
+	ROS_INFO("Footstep controller init successful.");
 }
 
 void ThorMangFootstepPreviewController::stopping(const ros::Time& time)
@@ -255,7 +256,6 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 
 void ThorMangFootstepPreviewController::StartWalking()
 {
-	PreviewControlWalking::GetInstance()->Initialize();
 	if(!PreviewControlWalking::GetInstance()->IsRunning())
 		PreviewControlWalking::GetInstance()->Start();
 }
