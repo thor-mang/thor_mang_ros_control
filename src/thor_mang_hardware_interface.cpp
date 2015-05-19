@@ -298,7 +298,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   update_force_torque_compensation();
   update_force_torque_sensors();
 
-	state_estimator.setIMU(ins->GetEulerAngle().roll, ins->GetEulerAngle().pitch, -ins->GetEulerAngle().yaw);
+	state_estimator.setIMU(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, -ins->GetEulerAngle().yaw);
 	state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
 	state_estimator.update();
 }
