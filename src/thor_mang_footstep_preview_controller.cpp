@@ -74,8 +74,8 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 	}
 
     // Init walking
-    nh.param("hip_pitch_offset", hip_pitch_offset,7.0);
-    nh.param("ankle_pitch_offset", ankle_pitch_offset,0.0);
+    nh.param("hip_pitch_offset", hip_pitch_offset,10.2);
+    nh.param("ankle_pitch_offset", ankle_pitch_offset,-1.08);
     nh.param("walk_stabilizer_gain_ratio", walk_stabilizer_gain_ratio,3.0);
     nh.param("imu_gyro_gain_ratio", hip_pitch_offset,0.0731);
     nh.param("force_moment_distribution_ratio", force_moment_distribution_ratio,0.4);
