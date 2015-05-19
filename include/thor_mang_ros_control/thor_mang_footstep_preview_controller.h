@@ -111,8 +111,8 @@ protected:
   ros::Time last_call;
   double system_control_unit_time_sec;
 
-  typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewServer;
-  boost::shared_ptr<FootstepPreviewServer> dyn_rec_server_;
+	typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
+  boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
 
 };
 }

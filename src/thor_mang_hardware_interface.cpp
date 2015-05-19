@@ -213,7 +213,10 @@ void ThorMangHardwareInterface::Initialize()
     ft_compensation[sensorIndex].initGravityPublisher(ftSensorUIDs[sensorIndex] + "_gravity", ftSensorUIDs[sensorIndex]);
   }
 
-  robot_transforms.init();
+	robot_transforms_ptr.reset(new robot_tools::RobotTransforms());
+	robot_transforms_ptr->init();
+	state_estimator.setRobotTransforms(robot_transforms_ptr);
+	state_estimator.init(ros::NodeHandle("state_estimator"));
 }
 
 void ThorMangHardwareInterface::Process()
@@ -238,7 +241,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
 
   // Update Robot state
   for (unsigned int i = 0; i < 30; i++) // iterate over all body joints
-    robot_transforms.updateState(jointUIDs[i], pos[i]);
+		robot_transforms_ptr->updateState(jointUIDs[i], pos[i]);
 
   // read IMU and transform it to pelvis frame
   tf::Quaternion imu_orient;
@@ -260,7 +263,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // Update robot state root transform
   Eigen::Affine3d imu_orient_rot(Eigen::Quaternion<double>(imu_orientation[3], imu_orientation[0], imu_orientation[1], imu_orientation[2]));
   imu_orient_rot.translation()  = Eigen::Vector3d::Zero();
-  robot_transforms.updateRootTransform(imu_orient_rot);
+	robot_transforms_ptr->updateRootTransform(imu_orient_rot);
 
   // read FT-Sensors
   force_raw[R_ARM][0] = -MotionStatus::R_ARM_FX;
@@ -294,6 +297,10 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // apply compensation
   update_force_torque_compensation();
   update_force_torque_sensors();
+
+	state_estimator.setIMU(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, -ins->GetEulerAngle().yaw);
+	state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
+	state_estimator.update();
 }
 
 void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
@@ -654,7 +661,7 @@ void ThorMangHardwareInterface::update_force_torque_compensation()
 {
   for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
   {
-    Eigen::Matrix3d world_gripper_rot = (robot_transforms.getRootTransform().rotation() * robot_transforms.getTransform(ftSensorUIDs[i]).rotation()).inverse();
+		Eigen::Matrix3d world_gripper_rot = (robot_transforms_ptr->getRootTransform().rotation() * robot_transforms_ptr->getTransform(ftSensorUIDs[i]).rotation()).inverse();
     ft_compensation[i].setWorldGripperRotation(world_gripper_rot);
   }
 }
@@ -744,7 +751,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
     // accumulate values and divide them later by num of measurements
     force_torque_offset[ft_sensor_index] += ft_compensated;
 
-    if (num_ft_measurements[ft_sensor_index]++ > 1000)
+		if (num_ft_measurements[ft_sensor_index]++ > 500)
     {
       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
       has_ft_offsets[ft_sensor_index] = true;
