@@ -50,11 +50,6 @@ ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
 		claim_arms(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
-  ros::NodeHandle nh_dy_rec("/footstep_preview_controller");
-
-  dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_(nh_dy_rec);
-  dyn_rec_server_.setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
-
 }
 
 bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh) {
@@ -62,6 +57,9 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 	std::string execute_step_plan_topic;
 	nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
 	nh.param("arms", claim_arms, true);
+
+	dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> dyn_rec_server_(nh);
+	dyn_rec_server_.setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
 
 	// Claim all joints needed by robotis
 	for (unsigned int id = 1; id < joint_count+1; id++) {
