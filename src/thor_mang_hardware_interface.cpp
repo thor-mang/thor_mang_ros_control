@@ -246,19 +246,11 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // read IMU and transform it to pelvis frame
   tf::Quaternion imu_orient;
   imu_orient.setRPY(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, -ins->GetEulerAngle().yaw);
-	tf::Quaternion imu_orient_no_yaw;
-	imu_orient_no_yaw.setRPY(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, 0);
 
   imu_orientation[0] = imu_orient.x();
   imu_orientation[1] = imu_orient.y();
   imu_orientation[2] = imu_orient.z();
   imu_orientation[3] = imu_orient.w();
-
-	double imu_orientation_no_yaw[4];
-	imu_orientation_no_yaw[0] = imu_orient_no_yaw.x();
-	imu_orientation_no_yaw[1] = imu_orient_no_yaw.y();
-	imu_orientation_no_yaw[2] = imu_orient_no_yaw.z();
-	imu_orientation_no_yaw[3] = imu_orient_no_yaw.w();
 
   imu_angular_velocity[0] =  ins->GetGyroData().scaled_gyro[1];
   imu_angular_velocity[1] =  ins->GetGyroData().scaled_gyro[0];
@@ -306,7 +298,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   update_force_torque_compensation();
   update_force_torque_sensors();
 
-	state_estimator.setIMU(imu_orientation_no_yaw, imu_angular_velocity, imu_linear_acceleration);
+	state_estimator.setIMU(ins->GetEulerAngle().roll, ins->GetEulerAngle().pitch, -ins->GetEulerAngle().yaw);
 	state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
 	state_estimator.update();
 }
