@@ -73,7 +73,21 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 		}
 	}
 
-	// Init walking
+    // Init walking
+    nh.param("hip_pitch_offset", hip_pitch_offset,7.0);
+    nh.param("ankle_pitch_offset", ankle_pitch_offset,0.0);
+    nh.param("walk_stabilizer_gain_ratio", walk_stabilizer_gain_ratio,3.0);
+    nh.param("imu_gyro_gain_ratio", hip_pitch_offset,0.0731);
+    nh.param("force_moment_distribution_ratio", force_moment_distribution_ratio,0.4);
+    nh.param("balance_hip_pitch_gain", balance_hip_pitch_gain,1.0);
+    nh.param("balance_z_gain_by_ft", balance_z_gain_by_ft,0.05);
+    nh.param("balance_right_roll_gain_by_ft", balance_right_roll_gain_by_ft,0.001);
+    nh.param("balance_right_pitch_gain_by_ft", balance_right_pitch_gain_by_ft,-0.0005);
+    nh.param("balance_left_roll_gain_by_ft", balance_left_roll_gain_by_ft,0.001);
+    nh.param("balance_left_pitch_gain_by_ft", balance_left_pitch_gain_by_ft,-0.0005);
+    nh.param("foot_landing_offset_gain", foot_landing_offset_gain,1.0);
+    nh.param("foot_landing_detect_n", foot_landing_detect_n,50.0);
+
 	initWalkingParameters();
 	PreviewControlWalking::GetInstance()->SetInitialPose(0.0, -125.0,   0.0, 0.0, 0.0, 0.0,
 																											 0.0,  125.0,   0.0, 0.0, 0.0, 0.0,
