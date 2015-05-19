@@ -406,7 +406,7 @@ bool ThorMangHardwareInterface::goReadyPose()
 
     int id = m_RobotInfo[joint_index].m_ID;
 
-    int error;
+    int error = 0;
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error);
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 2000, &error);
 
@@ -483,7 +483,7 @@ bool ThorMangHardwareInterface::goReadyPose()
 
     int id = m_RobotInfo[joint_index].m_ID;
 
-    int error;
+    int error = 0;
     if (id >= 15 && id <= 26)
       m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteWord(id, PRO54::P_VELOCITY_I_GAIN_L, 0, &error);
 
@@ -578,7 +578,7 @@ bool ThorMangHardwareInterface::goReadyPose()
 
     int id = m_RobotInfo[joint_index].m_ID;
 
-    int error;
+    int error = 0;
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &error);
     m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &error);
 
