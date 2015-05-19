@@ -50,15 +50,6 @@ ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
 		claim_arms(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
-  ros::NodeHandle nh_dy_rec("footstep_preview_controller");
-
-  dyn_rec_server_.reset(new FootstepPreviewServer(nh_dy_rec));
-
-  dyn_rec_server_->setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
-
-  //param_reconfig_callback_ = boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2);
-  //dyn_rec_server_->setCallback(param_reconfig_callback_);
-
 }
 
 bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh) {
@@ -67,7 +58,10 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 	nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
 	nh.param("arms", claim_arms, true);
 
-	// Claim all joints needed by robotis
+	dyn_rec_server_.reset(new FootstepPreviewConfigServer(nh));
+	dyn_rec_server_->setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
+
+	// Pre-claim all joints needed by robotis
 	for (unsigned int id = 1; id < joint_count+1; id++) {
 		if((id >= 15 && id <=26) || claim_arms && (id == 1 || id ==2 || id == 7|| id == 8)) {
 			try {
@@ -78,37 +72,39 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 			}
 		}
 	}
+
+	// Init walking
 	initWalkingParameters();
 	PreviewControlWalking::GetInstance()->SetInitialPose(0.0, -125.0,   0.0, 0.0, 0.0, 0.0,
 																											 0.0,  125.0,   0.0, 0.0, 0.0, 0.0,
 																											 0.0,    0.0, 650.0, 0.0, 0.0, 0.0);
 
-	// init action servers
+	// Init action servers
 	execute_step_plan_as = vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::create(nh, execute_step_plan_topic, true, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)));
 	return true;
 }
 
 void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros::Duration& period)
 {
-
+	// Nothing to do here since robotis has its own process function
 }
 
 void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 {
-	ROS_INFO("Controller '%s' is starting.", uID);
+	ROS_INFO("[PreviewWalking] Controller '%s' is starting.", uID);
 	MotionManager::GetInstance()->AddModule(this);
-	ROS_INFO("Init IMU data");
+	ROS_INFO("[PreviewWalking] Init IMU data");
 	InitImuData();
 
-	ROS_INFO("Init FT data");
+	ROS_INFO("[PreviewWalking] Init FT data");
 	InitFtDataOnGround();
 	claimJoints();
-	ROS_INFO("Footstep controller init successful.");
+	ROS_INFO("[PreviewWalking] Footstep controller init successful.");
 }
 
 void ThorMangFootstepPreviewController::stopping(const ros::Time& time)
 {
-	ROS_INFO("Controller '%s' stopping.", uID);
+	ROS_INFO("[PreviewWalking] Controller '%s' stopping.", uID);
 	PreviewControlWalking::GetInstance()->Stop();
 	Thor::MotionManager::GetInstance()->RemoveModule(this);
 	unclaimJoints();
@@ -190,7 +186,7 @@ void ThorMangFootstepPreviewController::InitFtDataOnGround()
 
 void ThorMangFootstepPreviewController::initWalkingParameters()
 {
-	ROS_INFO("Estimating system control time: %f", system_control_unit_time_sec);
+	ROS_INFO("[PreviewWalking] Estimating system control time: %f", system_control_unit_time_sec);
 
 	// init walking lib
 	PreviewControlWalking::GetInstance()->BALANCE_ENABLE = true;
@@ -299,15 +295,15 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 	Thor::StepData ref_step_data;
 	PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
 
-	ROS_INFO("Converting step plan...");
+	ROS_INFO("[PreviewWalking] Converting step plan...");
 	std::vector<StepData> step_data_list;
 	step_data_list.push_back(ref_step_data);
 	if (!thor_mang_footstep_planning::operator<<(step_data_list, step_plan)) {
-		ROS_ERROR("Error during step plan conversion!");
+		ROS_ERROR("[PreviewWalking] Error during step plan conversion!");
 		return;
 	}
 
-	ROS_INFO("Spooling step plan...");
+	ROS_INFO("[PreviewWalking] Spooling step plan...");
 	for (std::vector<StepData>::iterator itr = step_data_list.begin(); itr != step_data_list.end(); itr++)
 	{
 		StepData step_data = *itr;
@@ -318,13 +314,13 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 		PreviewControlWalking::GetInstance()->AddStepData(step_data);
 	}
 
-	ROS_INFO("Start walking!");
+	ROS_INFO("[PreviewWalking] Start walking!");
 	StartWalking();
 
 	while(PreviewControlWalking::GetInstance()->IsRunning())
 		usleep(8000);
 
-	ROS_INFO("Walking finished!");
+	ROS_INFO("[PreviewWalking] Walking finished!");
 
 	vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
 	as->setSucceeded(result);
@@ -347,7 +343,6 @@ void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_contro
 	foot_landing_detect_n = config.foot_landing_detect_n;
 
 	initWalkingParameters();
-
 }
 
 }

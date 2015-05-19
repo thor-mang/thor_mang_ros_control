@@ -54,6 +54,7 @@
 
 // Robot State
 #include <robot_transforms/robot_transforms.h>
+#include <biped_state_estimator/biped_state_estimator.h>
 
 #define G_ACC 9.80665
 
@@ -223,7 +224,10 @@ protected:
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   // Robot Transforms
-  robot_tools::RobotTransforms robot_transforms;
+	boost::shared_ptr<robot_tools::RobotTransforms> robot_transforms_ptr;
+
+	// State estimation
+	robot_tools::StateEstimator state_estimator;
 };
 }
 

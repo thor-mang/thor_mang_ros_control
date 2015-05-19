@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   vigir_force_torque_compensation_lib
   thor_mang_footstep_planning_msgs
   robot_transforms
+  biped_state_estimator
   dynamic_reconfigure
 )
 
@@ -102,7 +103,7 @@ link_directories(../thor_mang_libs/lib)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES thor_mang_ros_control
-  CATKIN_DEPENDS roscpp rospy actionlib_msgs actionlib std_msgs hardware_interface controller_manager dynamic_reconfigure vigir_force_torque_compensation_lib thor_mang_footstep_planning_msgs robot_transforms
+  CATKIN_DEPENDS roscpp rospy actionlib_msgs actionlib std_msgs hardware_interface controller_manager dynamic_reconfigure vigir_force_torque_compensation_lib thor_mang_footstep_planning_msgs robot_transforms biped_state_estimator dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
