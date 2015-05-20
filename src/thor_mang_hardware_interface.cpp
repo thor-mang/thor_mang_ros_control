@@ -500,9 +500,9 @@ bool ThorMangHardwareInterface::goReadyPose()
     int id = m_RobotInfo[joint_index].m_ID;
 
     if (id == 3)
-      initJointPosition(joint_index, -41833);
+      initJointPosition(joint_index, -62750);
     else if (id == 4)
-      initJointPosition(joint_index, 41833);
+      initJointPosition(joint_index, 62750);
 
   }
   usleep(3000000);
