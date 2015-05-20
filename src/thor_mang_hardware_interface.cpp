@@ -213,10 +213,10 @@ void ThorMangHardwareInterface::Initialize()
     ft_compensation[sensorIndex].initGravityPublisher(ftSensorUIDs[sensorIndex] + "_gravity", ftSensorUIDs[sensorIndex]);
   }
 
-	robot_transforms_ptr.reset(new robot_tools::RobotTransforms());
-	robot_transforms_ptr->init();
-	state_estimator.setRobotTransforms(robot_transforms_ptr);
-	state_estimator.init(ros::NodeHandle("state_estimator"));
+  robot_transforms_ptr.reset(new robot_tools::RobotTransforms());
+  robot_transforms_ptr->init();
+  state_estimator.setRobotTransforms(robot_transforms_ptr);
+  state_estimator.init(ros::NodeHandle("state_estimator"));
 }
 
 void ThorMangHardwareInterface::Process()
@@ -241,7 +241,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
 
   // Update Robot state
   for (unsigned int i = 0; i < 30; i++) // iterate over all body joints
-		robot_transforms_ptr->updateState(jointUIDs[i], pos[i]);
+    robot_transforms_ptr->updateState(jointUIDs[i], pos[i]);
 
   // read IMU and transform it to pelvis frame
   tf::Quaternion imu_orient;
@@ -263,7 +263,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   // Update robot state root transform
   Eigen::Affine3d imu_orient_rot(Eigen::Quaternion<double>(imu_orientation[3], imu_orientation[0], imu_orientation[1], imu_orientation[2]));
   imu_orient_rot.translation()  = Eigen::Vector3d::Zero();
-	robot_transforms_ptr->updateRootTransform(imu_orient_rot);
+  robot_transforms_ptr->updateRootTransform(imu_orient_rot);
 
   // read FT-Sensors
   force_raw[R_ARM][0] = -MotionStatus::R_ARM_FX;
@@ -298,9 +298,9 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   update_force_torque_compensation();
   update_force_torque_sensors();
 
-	state_estimator.setIMU(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, -ins->GetEulerAngle().yaw);
-	state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
-	state_estimator.update();
+  state_estimator.setIMU(ins->GetEulerAngle().pitch, ins->GetEulerAngle().roll, -ins->GetEulerAngle().yaw);
+  state_estimator.setFeetForceZ(force_compensated[L_LEG][2], force_compensated[R_LEG][2]);
+  state_estimator.update();
 }
 
 void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
@@ -499,78 +499,90 @@ bool ThorMangHardwareInterface::goReadyPose()
   {
     int id = m_RobotInfo[joint_index].m_ID;
 
-    if (id == 1)
-      initJointPosition(joint_index, -62750 + MotionManager::GetInstance()->m_Offset[0]);
-    else if (id == 2)
-      initJointPosition(joint_index, 62750 + MotionManager::GetInstance()->m_Offset[1]);
-    else if (id == 3)
-      initJointPosition(joint_index, -109520 + MotionManager::GetInstance()->m_Offset[2]);
+    if (id == 3)
+      initJointPosition(joint_index, -41833);
     else if (id == 4)
-      initJointPosition(joint_index, 109520 + MotionManager::GetInstance()->m_Offset[3]);
+      initJointPosition(joint_index, 41833);
+
+  }
+  usleep(3000000);
+
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    int id = m_RobotInfo[joint_index].m_ID;
+
+    if (id == 1)
+      initJointPosition(joint_index, -62750);
+    else if (id == 2)
+      initJointPosition(joint_index, 62750);
+    else if (id == 3)
+      initJointPosition(joint_index, -109520);
+    else if (id == 4)
+      initJointPosition(joint_index, 109520);
     else if (id == 5)
-      initJointPosition(joint_index, 125500 + MotionManager::GetInstance()->m_Offset[4]);
+      initJointPosition(joint_index, 125500);
     else if (id == 6)
-      initJointPosition(joint_index, -125500 + MotionManager::GetInstance()->m_Offset[5]);
+      initJointPosition(joint_index, -125500);
     else if (id == 7)
-      initJointPosition(joint_index, 62750 + MotionManager::GetInstance()->m_Offset[6]);
+      initJointPosition(joint_index, 62750);
     else if (id == 8)
-      initJointPosition(joint_index, -62750 + MotionManager::GetInstance()->m_Offset[7]);
+      initJointPosition(joint_index, -62750);
     else if (id == 9)
-      initJointPosition(joint_index, -75000 + MotionManager::GetInstance()->m_Offset[8]);
+      initJointPosition(joint_index, -75000);
     else if (id == 10)
-      initJointPosition(joint_index,  75000 + MotionManager::GetInstance()->m_Offset[9]);
+      initJointPosition(joint_index,  75000);
 
     else if (id == 11)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[10]);
+      initJointPosition(joint_index, 0);
     else if (id == 12)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[11]);
+      initJointPosition(joint_index, 0);
     else if (id == 13)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[12]);
+      initJointPosition(joint_index, 0);
     else if (id == 14)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[13]);
+      initJointPosition(joint_index, 0);
 
     else if (id == 27)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[26]);
+      initJointPosition(joint_index, 0);
     else if (id == 28)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[27]);
+      initJointPosition(joint_index, 0);
     else if (id == 29)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[28]);
+      initJointPosition(joint_index, 0);
     else if (id == 30)
-      initJointPosition(joint_index,  0 + MotionManager::GetInstance()->m_Offset[29]);
+      initJointPosition(joint_index, 0);
 
     else if (id == 15)
-      initJointPosition(joint_index,  outValue[0] + MotionManager::GetInstance()->m_Offset[14]);
+      initJointPosition(joint_index, outValue[0]);
     else if (id == 17)
-      initJointPosition(joint_index,  outValue[1] + MotionManager::GetInstance()->m_Offset[16]);
+      initJointPosition(joint_index, outValue[1]);
     else if (id == 19)
-      initJointPosition(joint_index,  outValue[2] + MotionManager::GetInstance()->m_Offset[18]);
+      initJointPosition(joint_index, outValue[2]);
     else if (id == 21)
-      initJointPosition(joint_index,  outValue[3] + MotionManager::GetInstance()->m_Offset[20]);
+      initJointPosition(joint_index, outValue[3]);
     else if (id == 23)
-      initJointPosition(joint_index,  outValue[4] + MotionManager::GetInstance()->m_Offset[22]);
+      initJointPosition(joint_index, outValue[4]);
     else if (id == 25)
-      initJointPosition(joint_index,  outValue[5] + MotionManager::GetInstance()->m_Offset[24]);
+      initJointPosition(joint_index, outValue[5]);
 
     else if (id == 16)
-      initJointPosition(joint_index,  outValue[6] + MotionManager::GetInstance()->m_Offset[15]);
+      initJointPosition(joint_index, outValue[6]);
     else if (id == 18)
-      initJointPosition(joint_index,  outValue[7] + MotionManager::GetInstance()->m_Offset[17]);
+      initJointPosition(joint_index, outValue[7]);
     else if (id == 20)
-      initJointPosition(joint_index,  outValue[8] + MotionManager::GetInstance()->m_Offset[19]);
+      initJointPosition(joint_index, outValue[8]);
     else if (id == 22)
-      initJointPosition(joint_index,  outValue[9] + MotionManager::GetInstance()->m_Offset[21]);
+      initJointPosition(joint_index, outValue[9]);
     else if (id == 24)
-      initJointPosition(joint_index,  outValue[10] + MotionManager::GetInstance()->m_Offset[23]);
+      initJointPosition(joint_index, outValue[10]);
     else if (id == 26)
-      initJointPosition(joint_index,  outValue[11] + MotionManager::GetInstance()->m_Offset[25]);
+      initJointPosition(joint_index, outValue[11]);
 
     else if (id == 37)
-      initJointPosition(joint_index,  2048 + MotionManager::GetInstance()->m_Offset[36]);
+      initJointPosition(joint_index, 2048);
 
     usleep(1000);
   }
-
   usleep(5000000);
+
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
     if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
@@ -592,7 +604,8 @@ bool ThorMangHardwareInterface::goReadyPose()
 
 void ThorMangHardwareInterface::initJointPosition(unsigned int joint_index, int value)
 {
-  MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value;
+  int id = m_RobotInfo[joint_index].m_ID;
+  MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value + MotionManager::GetInstance()->m_Offset[id-1];
   MotionManager::GetInstance()->WriteGoalPosition(MotionStatus::m_CurrentJoints[joint_index]);
 }
 
@@ -661,7 +674,7 @@ void ThorMangHardwareInterface::update_force_torque_compensation()
 {
   for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
   {
-		Eigen::Matrix3d world_gripper_rot = (robot_transforms_ptr->getRootTransform().rotation() * robot_transforms_ptr->getTransform(ftSensorUIDs[i]).rotation()).inverse();
+    Eigen::Matrix3d world_gripper_rot = (robot_transforms_ptr->getRootTransform().rotation() * robot_transforms_ptr->getTransform(ftSensorUIDs[i]).rotation()).inverse();
     ft_compensation[i].setWorldGripperRotation(world_gripper_rot);
   }
 }
@@ -751,7 +764,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
     // accumulate values and divide them later by num of measurements
     force_torque_offset[ft_sensor_index] += ft_compensated;
 
-		if (num_ft_measurements[ft_sensor_index]++ > 500)
+    if (num_ft_measurements[ft_sensor_index]++ > 500)
     {
       force_torque_offset[ft_sensor_index] = (force_torque_offset[ft_sensor_index] / (double) num_ft_measurements[ft_sensor_index]).eval();
       has_ft_offsets[ft_sensor_index] = true;
