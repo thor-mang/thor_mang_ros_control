@@ -101,8 +101,10 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(false)
   , torque_on_start(false)
+	, current_support_leg("l_foot")
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
+	for (unsigned int i = 0; i < 6; i++) com[i] = 0;
 }
 
 ThorMangHardwareInterface::ThorMangHardwareInterface(ThorMangHardwareInterface const&)
@@ -200,7 +202,7 @@ void ThorMangHardwareInterface::Initialize()
     resetFtSensor(sensor_id);
 
   // footstep interface
-  hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle");
+	hardware_interface::ThorMangFootstepsHandle footsteps_handle("footsteps_handle", );
   footstep_interface.registerHandle(footsteps_handle);
   registerInterface(&footstep_interface);
 

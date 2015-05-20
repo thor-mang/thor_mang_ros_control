@@ -189,14 +189,17 @@ protected:
   // INS
   boost::shared_ptr<Ins> ins;
 
-  // ros controll stuff
+	// ros controll stuff
   hardware_interface::JointStateInterface joint_state_interface;
   hardware_interface::PositionJointInterface pos_joint_interface;
 
   hardware_interface::ImuSensorInterface imu_sensor_interface;
   hardware_interface::ForceTorqueSensorInterface force_torque_sensor_interface;
 
+	// Walking
   hardware_interface::ThorMangFootstepInterface footstep_interface;
+	double com[6];
+	std::string current_support_leg;
 
   double cmd[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>
   double pos[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>

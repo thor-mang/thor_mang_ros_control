@@ -41,17 +41,25 @@ class ThorMangFootstepsHandle
 {
 public:
   ThorMangFootstepsHandle()
-    : name("")
+		: name_(""),
+			com_(0),
+			support_leg_(0)
   {}
 
-  ThorMangFootstepsHandle(const std::string& name)
-    : name(name)
+	ThorMangFootstepsHandle(const std::string& name, double* com, std::string* support_leg)
+		: name_(name),
+			com_(com),
+			support_leg_(support_leg)
   {}
 
   std::string getName() const { return name; }
+	double getCOM() const { return *com_; }
+	std::string getSupportLeg() const { return *support_leg_; }
 
 private:
-  std::string name;
+	std::string name_;
+	double* com_;
+	std::string support_leg_;
 };
 
 /** \brief Hardware interface to support reading the state of footstep parameters */
