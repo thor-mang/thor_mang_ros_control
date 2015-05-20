@@ -208,6 +208,8 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 {
   ROS_INFO("[PreviewWalking] Estimating system control time: %f", system_control_unit_time_sec);
 
+  ROS_INFO_STREAM("[PreviewWalking] Setting hip pitch offset to: " << hip_pitch_offset);
+
   // init walking lib
   PreviewControlWalking::GetInstance()->BALANCE_ENABLE = true;
   PreviewControlWalking::GetInstance()->DEBUG_PRINT = false;
