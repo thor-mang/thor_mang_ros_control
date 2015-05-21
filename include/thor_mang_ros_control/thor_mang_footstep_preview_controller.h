@@ -125,8 +125,8 @@ protected:
   boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
 
   // Sensor resetting
-  bool imu_resetted;
-  bool ft_resetted;
+  bool has_imu_bias;
+  bool has_ft_bias;
   unsigned int current_imu_measurements;
   unsigned int current_ft_measurements;
   unsigned int max_imu_measurements;
