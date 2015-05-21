@@ -47,7 +47,9 @@ namespace Thor
 {
 ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
   : system_control_unit_time_sec(MotionModule::TIME_UNIT),
-    claim_arms(true)
+    claim_arms(true),
+    imu_resetted(true),
+    ft_resetted(true)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
 }
@@ -106,6 +108,12 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 
 void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros::Duration& period)
 {
+  addFtData();
+  addImuData();
+  if (goal_waiting & ft_resetted & imu_resetted) {
+    goal_waiting = false;
+    executeStepPlanAction(execute_step_plan_as);
+  }
   // Nothing to do here since robotis has its own process function
   if (PreviewControlWalking::GetInstance()->IsRunning()) {
     if (PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData() != remaining_steps) {
@@ -137,9 +145,9 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& time)
   MotionManager::GetInstance()->AddModule(this);
   ROS_INFO("[PreviewWalking] Init IMU data");
   InitImuData();
-
   ROS_INFO("[PreviewWalking] Init FT data");
   InitFtDataOnGround();
+  goal_waiting = false;
 
   PreviewControlWalking::GetInstance()->Start();
   ROS_INFO("[PreviewWalking] Footstep controller init successful.");
@@ -151,6 +159,8 @@ void ThorMangFootstepPreviewController::stopping(const ros::Time& time)
   PreviewControlWalking::GetInstance()->Stop();
   Thor::MotionManager::GetInstance()->RemoveModule(this);
   unclaimJoints();
+  imu_resetted = false;
+  ft_resetted = false;
 }
 
 void ThorMangFootstepPreviewController::Initialize()
@@ -172,59 +182,67 @@ void ThorMangFootstepPreviewController::Process()
 
 void ThorMangFootstepPreviewController::InitImuData()
 {
-  double RollInitAngleRad = 0.0, PitchInitAngleRad = 0.0;
-  int InitAngleWindowSize = 50;
-  for(int index = 0; index < InitAngleWindowSize; index++)
-  {
-    RollInitAngleRad += MotionStatus::EulerAngleX;
-    PitchInitAngleRad += MotionStatus::EulerAngleY;
-    usleep(4000);
-  }
-  PreviewControlWalking::GetInstance()->SetInitAngleinRad(RollInitAngleRad/((double)InitAngleWindowSize), PitchInitAngleRad/((double)InitAngleWindowSize));
+  imu_resetted = false;
+  imu_bias[0] = 0;
+  imu_bias[1] = 0;
 }
 
 void ThorMangFootstepPreviewController::InitFtDataOnGround()
 {
-  double right_fx_on_gnd_N = 0,  right_fy_on_gnd_N = 0,  right_fz_on_gnd_N = 0;
-  double right_tx_on_gnd_N = 0, right_ty_on_gnd_N = 0, right_tz_on_gnd_N = 0;
-  double left_fx_on_gnd_N = 0,  left_fy_on_gnd_N = 0,  left_fz_on_gnd_N = 0;
-  double left_tx_on_gnd_N = 0, left_ty_on_gnd_N = 0, left_tz_on_gnd_N = 0;
-  int InitAngleWindowSize = 125;
-  for(int count = 0; count < InitAngleWindowSize; count++)
-  {
-    right_fx_on_gnd_N  += MotionStatus::R_LEG_FX;
-    right_fy_on_gnd_N  += MotionStatus::R_LEG_FY;
-    right_fz_on_gnd_N  += MotionStatus::R_LEG_FZ;
-    right_tx_on_gnd_N += MotionStatus::R_LEG_TX;
-    right_ty_on_gnd_N += MotionStatus::R_LEG_TY;
-    right_tz_on_gnd_N += MotionStatus::R_LEG_TZ;
-
-    left_fx_on_gnd_N  += MotionStatus::L_LEG_FX;
-    left_fy_on_gnd_N  += MotionStatus::L_LEG_FY;
-    left_fz_on_gnd_N  += MotionStatus::L_LEG_FZ;
-    left_tx_on_gnd_N += MotionStatus::L_LEG_TX;
-    left_ty_on_gnd_N += MotionStatus::L_LEG_TY;
-    left_tz_on_gnd_N += MotionStatus::L_LEG_TZ;
-    usleep(8000);
+  for (unsigned int i = 0; i < 12; i++) {
+    ft_bias_on_ground[i] = 0;
   }
+  ft_resetted = false;
+}
 
-  right_fx_on_gnd_N = right_fx_on_gnd_N/(double)InitAngleWindowSize;
-  left_fx_on_gnd_N = left_fx_on_gnd_N/(double)InitAngleWindowSize;
-  right_fy_on_gnd_N = right_fy_on_gnd_N/(double)InitAngleWindowSize;
-  left_fy_on_gnd_N = left_fy_on_gnd_N/(double)InitAngleWindowSize;
-  right_fz_on_gnd_N = right_fz_on_gnd_N/(double)InitAngleWindowSize;
-  left_fz_on_gnd_N = left_fz_on_gnd_N/(double)InitAngleWindowSize;
-  right_tx_on_gnd_N = right_tx_on_gnd_N/(double)InitAngleWindowSize;
-  left_tx_on_gnd_N = left_tx_on_gnd_N/(double)InitAngleWindowSize;
-  right_ty_on_gnd_N = right_ty_on_gnd_N/(double)InitAngleWindowSize;
-  left_ty_on_gnd_N = left_ty_on_gnd_N/(double)InitAngleWindowSize;
-  right_tz_on_gnd_N = right_tz_on_gnd_N/(double)InitAngleWindowSize;
-  left_tz_on_gnd_N = left_tz_on_gnd_N/(double)InitAngleWindowSize;
+void ThorMangFootstepPreviewController::addImuData() {
+  if (!imu_resetted) {
+    if (current_imu_measurements++ < max_imu_measurements) {
+      imu_bias[0] += MotionStatus::EulerAngleX; // Roll
+      imu_bias[1] += MotionStatus::EulerAngleY; // Pitch
+    } else {
+      for (unsigned int i = 0; i < 2; i++) {
+        imu_bias[i] = imu_bias[i]/(double)max_imu_measurements;
+      }
+      ROS_INFO_STREAM("[PreviewWalking] Imu initialized with: " << imu_bias[0] << ", " << imu_bias[1]);
+      PreviewControlWalking::GetInstance()->SetInitAngleinRad(imu_bias[0], imu_bias[1]);
+      imu_resetted = true;
+    }
+  }
+}
 
-  PreviewControlWalking::GetInstance()->SetInitForceOntheGround(right_fx_on_gnd_N , right_fy_on_gnd_N, right_fz_on_gnd_N,
-                                                                right_tx_on_gnd_N, right_ty_on_gnd_N, right_tz_on_gnd_N,
-                                                                left_fx_on_gnd_N,  left_fy_on_gnd_N,  left_fz_on_gnd_N,
-                                                                left_tx_on_gnd_N, left_ty_on_gnd_N, left_tz_on_gnd_N);
+void ThorMangFootstepPreviewController::addFtData() {
+  if (!ft_resetted) {
+    if (current_ft_measurements++ < max_ft_measurements) {
+      ft_bias_on_ground[0]  += MotionStatus::R_LEG_FX;
+      ft_bias_on_ground[1]  += MotionStatus::R_LEG_FY;
+      ft_bias_on_ground[2]  += MotionStatus::R_LEG_FZ;
+      ft_bias_on_ground[3] += MotionStatus::R_LEG_TX;
+      ft_bias_on_ground[4] += MotionStatus::R_LEG_TY;
+      ft_bias_on_ground[5] += MotionStatus::R_LEG_TZ;
+
+      ft_bias_on_ground[6]  += MotionStatus::L_LEG_FX;
+      ft_bias_on_ground[7]  += MotionStatus::L_LEG_FY;
+      ft_bias_on_ground[8]  += MotionStatus::L_LEG_FZ;
+      ft_bias_on_ground[9] += MotionStatus::L_LEG_TX;
+      ft_bias_on_ground[10] += MotionStatus::L_LEG_TY;
+      ft_bias_on_ground[11] += MotionStatus::L_LEG_TZ;
+    } else {
+      ft_resetted = true;
+      std::stringstream ss;
+      for (unsigned int i = 0; i < 12; i++) {
+        ft_bias_on_ground[i] = ft_bias_on_ground[i]/(double)max_ft_measurements;
+        ss << ft_bias_on_ground[i];
+        if (i == 5) ss << "\n";
+        else if (i != 11) ss << ", ";
+      }
+      ROS_INFO_STREAM("[PreviewWalking] Ft initialized with: " << ss.str());
+      PreviewControlWalking::GetInstance()->SetInitForceOntheGround(ft_bias_on_ground[0], ft_bias_on_ground[1], ft_bias_on_ground[2],
+                                                                    ft_bias_on_ground[3], ft_bias_on_ground[4], ft_bias_on_ground[5],
+                                                                    ft_bias_on_ground[6], ft_bias_on_ground[7], ft_bias_on_ground[8],
+                                                                    ft_bias_on_ground[9], ft_bias_on_ground[10], ft_bias_on_ground[11]);
+    }
+  }
 }
 
 void ThorMangFootstepPreviewController::initWalkingParameters()
@@ -334,6 +352,11 @@ void ThorMangFootstepPreviewController::unclaimJoints()
 
 void ThorMangFootstepPreviewController::executeStepPlanAction(ActionServer::Ptr& as)
 {
+  if (!(imu_resetted && ft_resetted)) {
+    goal_waiting = true;
+    ROS_INFO("[PreviewWalking] Received new step plan but waiting for sensor reset.");
+    return;
+  }
   const vigir_footstep_planning::msgs::ExecuteStepPlanGoalConstPtr& goal(as->acceptNewGoal());
   vigir_footstep_planning::msgs::StepPlan step_plan = goal->step_plan;
 

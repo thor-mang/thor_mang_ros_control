@@ -50,6 +50,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <thor_mang_ros_control/FootstepPreviewControllerConfig.h>
 
+#include <queue>
+
 
 
 namespace Thor
@@ -77,7 +79,9 @@ public:
 
 protected:
   void InitImuData();
+  void addImuData();
   void InitFtDataOnGround();
+  void addFtData();
 
   void initWalkingParameters();
   void claimJoints();
@@ -105,6 +109,7 @@ protected:
 
   int remaining_steps;
   int total_steps;
+  bool goal_waiting;
 
   // action servers
   ActionServer::Ptr execute_step_plan_as;
@@ -118,6 +123,17 @@ protected:
 
 	typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
   boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
+
+  // Sensor resetting
+  bool imu_resetted;
+  bool ft_resetted;
+  unsigned int current_imu_measurements;
+  unsigned int current_ft_measurements;
+  unsigned int max_imu_measurements;
+  unsigned int max_ft_measurements;
+  double imu_bias[2];
+  double ft_bias_on_ground[12];
+
 
 };
 }
