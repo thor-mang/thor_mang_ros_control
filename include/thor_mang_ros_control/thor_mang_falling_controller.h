@@ -78,7 +78,7 @@ private:
     FallingPose fallingPose;
 
     std::string control_mode_switch_name;
-    ChangeControlModeActionClient *action_client;
+    boost::shared_ptr<ChangeControlModeActionClient> action_client;
 
     hardware_interface::ImuSensorHandle imu_sensor_handle;
 
