@@ -349,14 +349,7 @@ void ThorMangHardwareInterface::setTorqueOn(bool enable)
   else
     ROS_INFO("Disable torque!");
 
-  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
-  {
-    // ignore lidar motor
-    if (!enable && m_RobotInfo[joint_index].m_ID == 37)
-      continue;
-
-    MotionManager::GetInstance()->SetTorqueOn(m_RobotInfo[joint_index], enable);
-  }
+  MotionManager::GetInstance()->SetTorqueOn(enable);
 }
 
 void ThorMangHardwareInterface::enableLights(bool enable)
@@ -472,7 +465,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     outValue[idx] = 251000.0*(angle[idx])/180.0;
   }
 
-  double gdHipPitchOffset = 7.0;
+  double gdHipPitchOffset = 11.0;
   outValue[2] -= (double)dir_output[2] * gdHipPitchOffset * 251000.0/180.0;
   outValue[8] -= (double)dir_output[8] * gdHipPitchOffset * 251000.0/180.0;
 
