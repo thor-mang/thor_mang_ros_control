@@ -55,9 +55,9 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
     Thor::MotionManager::GetInstance()->LoadOffsetSettings(ini);
-    for (unsigned int i = 0; i < MotionStatus::m_CurrentJoints.size(); i++) {
-      ROS_WARN_STREAM("ID=" << i << " Offset=" << Thor::MotionManager::GetInstance()->m_Offset[i]);
-    }
+//    for (unsigned int i = 0; i < MotionStatus::m_CurrentJoints.size(); i++) {
+//      ROS_WARN_STREAM("ID=" << i << " Offset=" << Thor::MotionManager::GetInstance()->m_Offset[i]);
+//    }
     delete ini;
     ThorMangHardwareInterface::Instance()->setJointStateRate(joint_state_rate);
     Thor::MotionManager::GetInstance()->AddModule(ThorMangHardwareInterface::Instance().get());
