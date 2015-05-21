@@ -29,6 +29,11 @@ typedef enum {
     TorqueOff
 }State;
 
+typedef enum {
+    PoseFront,
+    PoseRear
+}FallingPose;
+
 class ThorMangFallingController:
         public controller_interface::Controller<hardware_interface::ImuSensorInterface>
         , public MotionModule
@@ -56,6 +61,8 @@ protected:
     void disableTorque();
 
 private:
+
+
     double rollThresholdPositive;
     double rollThresholdNegative;
     double pitchThresholdPositive;
@@ -67,6 +74,8 @@ private:
     std::vector<double> jointValues;
 
     State falling_state;
+
+    FallingPose fallingPose;
 
     std::string control_mode_switch_name;
     ChangeControlModeActionClient *action_client;

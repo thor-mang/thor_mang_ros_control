@@ -94,6 +94,10 @@ bool ThorMangFallingController::checkFalling()
 
     if (roll > rollThresholdPositive || roll < rollThresholdNegative
             || pitch < pitchThresholdNegative || pitch > pitchThresholdPositive){
+        if (pitch > pitchThresholdPositive)
+            fallingPose = PoseFront;
+        else
+            fallingPose = PoseRear;
         return true;
     }
     return false;
@@ -101,6 +105,11 @@ bool ThorMangFallingController::checkFalling()
 
 void ThorMangFallingController::goIntoFallPose(){
     ROS_INFO("Going into FALL!");
+    if(fallingPose == PoseFront){
+        ROS_INFO("Falling pose FRONT");
+    }else{
+        ROS_INFO("Falling pose REAR");
+    }
 
     fallPoseDoneTime = (ros::WallTime::now() + ros::WallDuration(fallPoseTime));
     MotionManager::GetInstance()->EnableLights(true);
