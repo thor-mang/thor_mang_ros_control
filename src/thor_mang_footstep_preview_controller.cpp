@@ -85,7 +85,7 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   nh.param("hip_pitch_offset", hip_pitch_offset, 10.2);
   nh.param("ankle_pitch_offset", ankle_pitch_offset, -1.08);
   nh.param("walk_stabilizer_gain_ratio", walk_stabilizer_gain_ratio, 3.0);
-  nh.param("imu_gyro_gain_ratio", hip_pitch_offset, 0.0731);
+  nh.param("imu_gyro_gain_ratio", imu_gyro_gain_ratio, 0.0731);
   nh.param("force_moment_distribution_ratio", force_moment_distribution_ratio, 0.4);
   nh.param("balance_hip_pitch_gain", balance_hip_pitch_gain, 1.0);
   nh.param("balance_z_gain_by_ft", balance_z_gain_by_ft, 0.05);
@@ -247,9 +247,9 @@ void ThorMangFootstepPreviewController::addFtData() {
 
 void ThorMangFootstepPreviewController::initWalkingParameters()
 {
-  ROS_INFO("[PreviewWalking] Estimating system control time: %f", system_control_unit_time_sec);
+  // ROS_INFO("[PreviewWalking] Estimating system control time: %f", system_control_unit_time_sec);
 
-  ROS_INFO_STREAM("[PreviewWalking] Setting hip pitch offset to: " << hip_pitch_offset);
+  // ROS_INFO_STREAM("[PreviewWalking] Setting hip pitch offset to: " << hip_pitch_offset);
 
   // init walking lib
   PreviewControlWalking::GetInstance()->BALANCE_ENABLE = true;

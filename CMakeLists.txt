@@ -122,6 +122,7 @@ set(HEADERS
     include/${PROJECT_NAME}/thor_mang_footstep_interface.h
     include/${PROJECT_NAME}/thor_mang_hardware_interface.h
     include/${PROJECT_NAME}/thor_mang_ros_controller.h
+    include/${PROJECT_NAME}/thor_mang_falling_controller.h
 )
 
 set(SOURCES
@@ -130,6 +131,7 @@ set(SOURCES
     src/thor_mang_footstep_interface.cpp
     src/thor_mang_hardware_interface.cpp
     src/thor_mang_ros_controller.cpp
+    src/thor_mang_falling_controller.cpp
 )
 
 ## Declare a cpp library
