@@ -8,5 +8,9 @@
     <description>
       ThorMangFootstepController, for interfacing with footstep planner and Robotis framework
     </description>
-  </class>
+  </class><class name="Thor/ThorMangFallingController" type="Thor::ThorMangFallingController" base_class_type="controller_interface::ControllerBase">
+  <description>
+    ThorMangFallingController, to detect if the robot is falling and prevent damages when doing so.
+  </description>
+</class>
 </library>

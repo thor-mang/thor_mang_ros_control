@@ -28,3 +28,13 @@
     type: Thor/ThorMangFootstepRecursiveController
     execute_step_plan_topic: 'execute_step_plan'
 
+  falling_controller:
+    type: Thor/ThorMangFallingController
+    rollThresholdPositive: 0.245
+    rollThresholdNegative: -0.325
+    pitchThresholdPositive: 0.3
+    pitchThresholdNegative: -0.15
+    fallPoseTime: 0.500
+    control_mode_switch_name: '/mode_controllers/control_mode_controller/change_control_mode'
+
+
