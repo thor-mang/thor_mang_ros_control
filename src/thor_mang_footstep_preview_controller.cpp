@@ -100,13 +100,33 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
                                                        0.0,    0.0, 650.0, 0.0, 0.0, 0.0);
 
   // Init action servers
-  execute_step_plan_as = vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::create(nh, execute_step_plan_topic, true, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)));
+  execute_step_plan_as = ActionServer::create(nh, execute_step_plan_topic, true, boost::bind(&ThorMangFootstepPreviewController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)), boost::bind(&ThorMangFootstepPreviewController::stepPlanPreempted, this));
   return true;
 }
 
 void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros::Duration& period)
 {
   // Nothing to do here since robotis has its own process function
+  if (PreviewControlWalking::GetInstance()->IsRunning()) {
+    if (PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData() != remaining_steps) {
+      remaining_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
+      ROS_INFO_STREAM("[PreviewWalking] Remaining steps: " << remaining_steps << "/" << total_steps);
+      ROS_INFO_STREAM("[PreviewWalking] Currently executing: " << total_steps - remaining_steps << ", Last executed: " << total_steps - remaining_steps -1);
+      ROS_INFO_STREAM("[PreviewWalking] -----------------------------------------------------");
+      vigir_footstep_planning::msgs::ExecuteStepPlanFeedback feedback;
+      feedback.currently_executing_step_index = total_steps - remaining_steps;
+      feedback.first_changeable_step_index = total_steps - remaining_steps +1;
+      feedback.last_performed_step_index = total_steps - remaining_steps -1;
+      execute_step_plan_as->publishFeedback(feedback);
+    }
+  } else {
+    if (execute_step_plan_as->isActive()) {
+      ROS_INFO("[PreviewWalking] Walking finished!");
+
+      vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+      execute_step_plan_as->setSucceeded(result);
+    }
+  }
 }
 
 void ThorMangFootstepPreviewController::starting(const ros::Time& time)
@@ -312,7 +332,7 @@ void ThorMangFootstepPreviewController::unclaimJoints()
   }
 }
 
-void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as)
+void ThorMangFootstepPreviewController::executeStepPlanAction(ActionServer::Ptr& as)
 {
   const vigir_footstep_planning::msgs::ExecuteStepPlanGoalConstPtr& goal(as->acceptNewGoal());
   vigir_footstep_planning::msgs::StepPlan step_plan = goal->step_plan;
@@ -343,14 +363,12 @@ void ThorMangFootstepPreviewController::executeStepPlanAction(vigir_footstep_pla
 
   ROS_INFO("[PreviewWalking] Start walking!");
   StartWalking();
+  remaining_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
+  total_steps = step_plan.steps.size();
+}
 
-  while(PreviewControlWalking::GetInstance()->IsRunning())
-    usleep(8000);
-
-  ROS_INFO("[PreviewWalking] Walking finished!");
-
-  vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
-  as->setSucceeded(result);
+void ThorMangFootstepPreviewController::stepPlanPreempted() {
+  ROS_INFO("[PreviewWalking] Step plan preempting was requested.");
 }
 
 void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level)

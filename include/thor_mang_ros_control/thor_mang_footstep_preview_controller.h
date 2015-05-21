@@ -99,10 +99,15 @@ protected:
   double foot_landing_detect_n;
 
   // action server calls
-  void executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as);
+  typedef vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction> ActionServer;
+  void executeStepPlanAction(ActionServer::Ptr& as);
+  void stepPlanPreempted();
+
+  int remaining_steps;
+  int total_steps;
 
   // action servers
-  vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr execute_step_plan_as;
+  ActionServer::Ptr execute_step_plan_as;
 
   //dyn_reconfigure_callback
   void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
