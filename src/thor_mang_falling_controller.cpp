@@ -25,7 +25,7 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
 
     nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
 
-    action_client = new ChangeControlModeActionClient(control_mode_switch_name, true);
+    action_client.reset(new ChangeControlModeActionClient(control_mode_switch_name, true));
 
     imu_sensor_handle = hw->getHandle("pelvis_imu");
 
@@ -36,6 +36,26 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
 
 void ThorMangFallingController::update(const ros::Time& time, const ros::Duration& period)
 {
+    switch(falling_state){
+        case Disabled:
+            return;
+        case Ready:
+            if(checkFalling()){
+                goIntoFallPose();
+                falling_state = FallPose;
+            }
+            break;
+        case FallPose:
+            if(checkTorqueOff()){
+                disableTorque();
+                falling_state = TorqueOff;
+            }
+            break;
+        case TorqueOff:
+            return;
+        default:
+            ROS_ERROR("Unknown state");
+    }
 
 }
 
@@ -59,26 +79,6 @@ void ThorMangFallingController::Initialize()
 
 void ThorMangFallingController::Process()
 {
-    switch(falling_state){
-    case Disabled:
-        return;
-    case Ready:
-        if(checkFalling()){
-            goIntoFallPose();
-            falling_state = FallPose;
-        }
-        break;
-    case FallPose:
-        if(checkTorqueOff()){
-            disableTorque();
-            falling_state = TorqueOff;
-        }
-        break;
-    case TorqueOff:
-        return;
-    default:
-        ROS_ERROR("Unknown state");
-    }
 
 }
 
