@@ -111,6 +111,8 @@ void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros:
 
 void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 {
+  claimJoints();
+
   ROS_INFO("[PreviewWalking] Controller '%s' is starting.", uID);
   MotionManager::GetInstance()->AddModule(this);
   ROS_INFO("[PreviewWalking] Init IMU data");
@@ -118,7 +120,8 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& time)
 
   ROS_INFO("[PreviewWalking] Init FT data");
   InitFtDataOnGround();
-  claimJoints();
+
+  PreviewControlWalking::GetInstance()->Start();
   ROS_INFO("[PreviewWalking] Footstep controller init successful.");
 }
 
@@ -216,7 +219,7 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 
   PreviewControlWalking::GetInstance()->HIP_PITCH_OFFSET = hip_pitch_offset;//7.0;//6.0
   PreviewControlWalking::GetInstance()->ANKLE_PITCH_OFFSET = ankle_pitch_offset;//0.0;
-  PreviewControlWalking::GetInstance()->Initialize(); /// TODO: Shouldn't be necessary
+  //PreviewControlWalking::GetInstance()->Initialize(); /// TODO: Shouldn't be necessary
 
   PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO = walk_stabilizer_gain_ratio;//3.0;//3.5;
   PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = imu_gyro_gain_ratio; // 7.31*0.01;
