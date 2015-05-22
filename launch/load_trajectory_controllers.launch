@@ -5,7 +5,7 @@
 
   <!-- load trajectory controllers -->
   <node name="trajectory_controller_hand_spawner" pkg="controller_manager" type="spawner" ns="$(arg namespace)" respawn="false" output="screen"
-    args="left_arm_traj_controller
+    args="--stopped left_arm_traj_controller
           right_arm_traj_controller
           left_leg_traj_controller
           right_leg_traj_controller

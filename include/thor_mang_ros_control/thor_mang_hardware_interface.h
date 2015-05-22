@@ -131,11 +131,13 @@ public:
   // interfaces
   void setJointStateRate(double joint_state_rate);
 
-  void enableTorqueOnStart(bool enable);
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
 
   void enableLights(bool enable);
+
+  void resetFtSensor(unsigned int sensor_id);
+  void startCalibration();
 
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
@@ -147,8 +149,6 @@ public:
   static const std::string jointUIDs[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
   static const std::string ftSensorUIDs[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
-  void resetFtSensor(unsigned int sensor_id);
-
 protected:
   ThorMangHardwareInterface();
   ThorMangHardwareInterface(ThorMangHardwareInterface const&);
@@ -158,10 +158,9 @@ protected:
   JointData* getJoint(int id);
 
   // Robot bringup
-  bool robotBringUp();
   bool goReadyPose();
 
-  void initJointPosition(unsigned int joint_index, int value);
+  void setJointPosition(unsigned int joint_index, int value);
   void initINS();
   void InitForceTorque();
 
@@ -181,7 +180,6 @@ protected:
   // parameters
   double joint_state_intervall;
   ros::Time last_joint_state_read;
-  bool torque_on_start;
 
   // mutex
   mutable boost::mutex dynamixel_mutex;
@@ -189,14 +187,12 @@ protected:
   // INS
   boost::shared_ptr<Ins> ins;
 
-  // ros controll stuff
+  // robot hardware interfaces
   hardware_interface::JointStateInterface joint_state_interface;
   hardware_interface::PositionJointInterface pos_joint_interface;
 
   hardware_interface::ImuSensorInterface imu_sensor_interface;
   hardware_interface::ForceTorqueSensorInterface force_torque_sensor_interface;
-
-  hardware_interface::ThorMangFootstepInterface footstep_interface;
 
   double cmd[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>
   double pos[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>
@@ -215,7 +211,7 @@ protected:
   double force_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
   double torque_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
 
-  // Zero
+  // ros FT calibration
   FTCompensation::Vector6d force_torque_offset[MAXIMUM_NUMBER_OF_FT_SENSORS];
   unsigned int num_ft_measurements[MAXIMUM_NUMBER_OF_FT_SENSORS];
   bool has_ft_offsets[MAXIMUM_NUMBER_OF_FT_SENSORS];
