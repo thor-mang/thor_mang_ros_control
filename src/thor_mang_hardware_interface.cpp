@@ -99,7 +99,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , hardware_interface::RobotHW()
   , joint_state_intervall(20.0)
   , last_joint_state_read(ros::Time::now())
-  , has_foot_ft_offsets_in_air(false)
+  , has_foot_ft_offsets_in_air(true)
 {
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
