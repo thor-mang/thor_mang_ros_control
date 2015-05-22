@@ -44,19 +44,20 @@ namespace Thor
 class ThorMangRosControllerNode
 {
 public:
-  ThorMangRosControllerNode(bool torque_on = true);
-  ~ThorMangRosControllerNode();
+  ThorMangRosControllerNode();
 
   void update(ros::Time time, ros::Duration period);
 
 protected:
-  void setTorqueOn(std_msgs::BoolConstPtr enable);
-  void enableLights(std_msgs::BoolConstPtr enable);
+  void setTorqueOn(const std_msgs::BoolConstPtr& enable);
+  void enableLights(const std_msgs::BoolConstPtr& enable);
+  void startCalibration(const std_msgs::EmptyConstPtr& empty);
   void resetFtSensor(const std_msgs::EmptyConstPtr& empty_ptr, unsigned int sensor_id);
 
   // subscriber
   ros::Subscriber torque_on_sub;
   ros::Subscriber enable_lights_sub;
+  ros::Subscriber do_calibration_sub;
   ros::Subscriber reset_ft_sub[ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager;

@@ -36,7 +36,7 @@
     <include file = "$(find thor_mang_ros_control)/launch/hands/$(optenv RIGHT_HAND_TYPE r_stump)_controllers.launch" />
     <include file = "$(find thor_mang_ros_control)/launch/hands/$(optenv LEFT_HAND_TYPE  l_stump)_controllers.launch"/>
 
-    <node name="thor_mang_ros_controller" pkg="thor_mang_ros_control" type="thor_mang_ros_controller" respawn="true" output="screen" args="$(arg torque)">
+    <node name="thor_mang_ros_controller" pkg="thor_mang_ros_control" type="thor_mang_ros_controller" respawn="true" output="screen">
       <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_controller_config.yaml" command="load"/>
       <param name="thor_mang_ini_file" value="$(find thor_mang_ros_control)/config/thor_mang_config.ini" />
     </node>

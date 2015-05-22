@@ -36,7 +36,7 @@
 
 namespace Thor
 {
-ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
+ThorMangRosControllerNode::ThorMangRosControllerNode()
 {
   ros::NodeHandle nh;
 
@@ -51,13 +51,9 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
   minIni* ini = new minIni(thor_mang_ini_file);
   Thor::MotionManager::GetInstance()->LoadPortSettings(ini);
   Thor::MotionManager::GetInstance()->LoadFtSensorSettings(ini);
-  ThorMangHardwareInterface::Instance()->enableTorqueOnStart(torque_on);
   if(Thor::MotionManager::GetInstance()->Initialize() == true)
   {
     Thor::MotionManager::GetInstance()->LoadOffsetSettings(ini);
-//    for (unsigned int i = 0; i < MotionStatus::m_CurrentJoints.size(); i++) {
-//      ROS_WARN_STREAM("ID=" << i << " Offset=" << Thor::MotionManager::GetInstance()->m_Offset[i]);
-//    }
     delete ini;
     ThorMangHardwareInterface::Instance()->setJointStateRate(joint_state_rate);
     Thor::MotionManager::GetInstance()->AddModule(ThorMangHardwareInterface::Instance().get());
@@ -79,24 +75,29 @@ ThorMangRosControllerNode::ThorMangRosControllerNode(bool torque_on)
   for (unsigned int sensor_id = 0; sensor_id < ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS; sensor_id++)
     reset_ft_sub[sensor_id] = nh.subscribe<std_msgs::Empty>("reset_ft/" + ThorMangHardwareInterface::ftSensorUIDs[sensor_id], 1, boost::bind(&ThorMangRosControllerNode::resetFtSensor, this, _1, sensor_id));
 
+  do_calibration_sub = nh.subscribe("start_calibration", 1, &ThorMangRosControllerNode::startCalibration, this);
+
   ROS_INFO("Initialization of ros controller completed!");
 }
 
-ThorMangRosControllerNode::~ThorMangRosControllerNode()
-{
-}
 
-void ThorMangRosControllerNode::setTorqueOn(std_msgs::BoolConstPtr enable)
+void ThorMangRosControllerNode::setTorqueOn(const std_msgs::BoolConstPtr& enable)
 {
   ThorMangHardwareInterface::Instance()->setTorqueOn(enable->data);
 }
 
-void ThorMangRosControllerNode::enableLights(std_msgs::BoolConstPtr enable)
+void ThorMangRosControllerNode::enableLights(const std_msgs::BoolConstPtr& enable)
 {
   ThorMangHardwareInterface::Instance()->enableLights(enable->data);
 }
 
-void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id) {
+void ThorMangRosControllerNode::startCalibration(const std_msgs::EmptyConstPtr& empty)
+{
+  ThorMangHardwareInterface::Instance()->startCalibration();
+}
+
+void ThorMangRosControllerNode::resetFtSensor(const std_msgs::EmptyConstPtr &empty_ptr, unsigned int sensor_id)
+{
   ROS_INFO_STREAM("Resetting " << ThorMangHardwareInterface::ftSensorUIDs[sensor_id] << " ft sensor.");
   ThorMangHardwareInterface::Instance()->resetFtSensor(sensor_id);
 }
@@ -148,15 +149,7 @@ int main(int argc, char** argv)
   double control_rate;
   nh.param("thor_mang_ros_controller/control_rate", control_rate, 125.0);
 
-  bool torque_on = true;
-  if (argc == 2) {
-    std::string torque_str = argv[1];
-    if (torque_str.compare("False") == 0) {
-      torque_on = false;
-    }
-  }
-
-  Thor::ThorMangRosControllerNode thor_mang_ros_controller_node(torque_on);
+  Thor::ThorMangRosControllerNode thor_mang_ros_controller_node;
 
   ros::AsyncSpinner spinner(4);
   spinner.start();
