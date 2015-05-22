@@ -134,7 +134,7 @@ public:
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
 
-  void enableLights(bool enable);
+  void setLightsEnabled(bool enable);
 
   void resetFtSensor(unsigned int sensor_id);
   void startCalibration();

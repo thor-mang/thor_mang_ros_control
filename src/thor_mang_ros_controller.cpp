@@ -88,7 +88,7 @@ void ThorMangRosControllerNode::setTorqueOn(const std_msgs::BoolConstPtr& enable
 
 void ThorMangRosControllerNode::enableLights(const std_msgs::BoolConstPtr& enable)
 {
-  ThorMangHardwareInterface::Instance()->enableLights(enable->data);
+  ThorMangHardwareInterface::Instance()->setLightsEnabled(enable->data);
 }
 
 void ThorMangRosControllerNode::startCalibration(const std_msgs::EmptyConstPtr& empty)
