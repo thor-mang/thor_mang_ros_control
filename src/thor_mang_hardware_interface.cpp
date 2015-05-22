@@ -336,7 +336,7 @@ void ThorMangHardwareInterface::setTorqueOn(bool enable)
   MotionManager::GetInstance()->SetTorqueOn(enable);
 }
 
-void ThorMangHardwareInterface::enableLights(bool enable)
+void ThorMangHardwareInterface::setLightsEnabled(bool enable)
 {
   if (enable)
     ROS_INFO("Enable lights!");
@@ -467,9 +467,38 @@ bool ThorMangHardwareInterface::goReadyPose()
       setJointPosition(joint_index, 62750);
 
   }
-  usleep(3000000);
+  usleep(3000000); // 3 seconds
 
-  // Move to ready pose
+  // Move arms to ready state
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    int id = m_RobotInfo[joint_index].m_ID;
+
+    if (id == 5)
+      setJointPosition(joint_index, 125500);
+    else if (id == 6)
+      setJointPosition(joint_index, -125500);
+    else if (id == 7)
+      setJointPosition(joint_index, 62750);
+    else if (id == 8)
+      setJointPosition(joint_index, -62750);
+    else if (id == 9)
+      setJointPosition(joint_index, -75000);
+    else if (id == 10)
+      setJointPosition(joint_index,  75000);
+    else if (id == 11)
+      setJointPosition(joint_index, 0);
+    else if (id == 12)
+      setJointPosition(joint_index, 0);
+    else if (id == 13)
+      setJointPosition(joint_index, 0);
+    else if (id == 14)
+      setJointPosition(joint_index, 0);
+  }
+
+  usleep(3000000); // 3 seconds
+
+  // Move rest to ready pose
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
     int id = m_RobotInfo[joint_index].m_ID;
@@ -482,27 +511,6 @@ bool ThorMangHardwareInterface::goReadyPose()
       setJointPosition(joint_index, -109520);
     else if (id == 4)
       setJointPosition(joint_index, 109520);
-    else if (id == 5)
-      setJointPosition(joint_index, 125500);
-    else if (id == 6)
-      setJointPosition(joint_index, -125500);
-    else if (id == 7)
-      setJointPosition(joint_index, 62750);
-    else if (id == 8)
-      setJointPosition(joint_index, -62750);
-    else if (id == 9)
-      setJointPosition(joint_index, -75000);
-    else if (id == 10)
-      setJointPosition(joint_index,  75000);
-
-    else if (id == 11)
-      setJointPosition(joint_index, 0);
-    else if (id == 12)
-      setJointPosition(joint_index, 0);
-    else if (id == 13)
-      setJointPosition(joint_index, 0);
-    else if (id == 14)
-      setJointPosition(joint_index, 0);
 
     else if (id == 27)
       setJointPosition(joint_index, 0);
@@ -544,8 +552,9 @@ bool ThorMangHardwareInterface::goReadyPose()
 
     usleep(1000);
   }
-  usleep(5000000);
+  usleep(5000000); // 5
 
+  // speed up servos again
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
     if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
