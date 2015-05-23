@@ -106,13 +106,13 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
         break;
     case TorqueOff:
         disableTorque();
-        ros::WallTime current = ros::WallTime::now();
-        if( current > testing_fall_timer){
-            alling_state = Disabled;
+        if( ros::WallTime::now() > testing_fall_timer){
+            falling_state = Disabled;
         }
         return;
     default:
         ROS_ERROR("Unknown state");
+        break;
     }
 
 }
