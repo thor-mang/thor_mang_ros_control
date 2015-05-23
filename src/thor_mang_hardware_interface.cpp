@@ -368,16 +368,8 @@ bool ThorMangHardwareInterface::goReadyPose()
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-      continue;
-
-    int id = m_RobotInfo[joint_index].m_ID;
-
-    int error = 0;
-    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error);
-    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 2000, &error);
-
-    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
+    setJointVelocity(joint_index, 2000);
+    setJointAcceleration(joint_index, 4);
 
     usleep(1000);
   }
@@ -563,16 +555,8 @@ bool ThorMangHardwareInterface::goReadyPose()
   // speed up servos again
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-      continue;
-
-    int id = m_RobotInfo[joint_index].m_ID;
-
-    int error = 0;
-    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &error);
-    m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &error);
-
-    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
+    setJointVelocity(joint_index, 0); // remove limits
+    setJointAcceleration(joint_index, 0);
 
     usleep(1000);
   }
@@ -585,6 +569,16 @@ void ThorMangHardwareInterface::setJointPosition(unsigned int joint_index, int v
   int id = m_RobotInfo[joint_index].m_ID;
   MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value + MotionManager::GetInstance()->m_Offset[id-1];
   MotionManager::GetInstance()->WriteGoalPosition(MotionStatus::m_CurrentJoints[joint_index]);
+}
+
+void ThorMangHardwareInterface::setJointVelocity(unsigned int joint_index, int value)
+{
+  MotionManager::GetInstance()->WriteGoalVelocity(MotionStatus::m_CurrentJoints[joint_index], value);
+}
+
+void ThorMangHardwareInterface::setJointAcceleration(unsigned int joint_index, int value)
+{
+  MotionManager::GetInstance()->WriteGoalAcceleration(MotionStatus::m_CurrentJoints[joint_index], value);
 }
 
 void ThorMangHardwareInterface::initINS()
