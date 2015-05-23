@@ -101,6 +101,12 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(true)
 {
+  for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++) {
+    has_ft_offsets[i] = true;
+    num_ft_measurements[i] = 0;
+    force_torque_offset[i] = FTCompensation::Vector6d::Zero();
+  }
+
   uID = const_cast<char*>("thor_mang_hardware_interface");
 }
 
