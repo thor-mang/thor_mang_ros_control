@@ -6,47 +6,46 @@
 namespace Thor
 {
 
-const unsigned int joint_count = 34;
-
-const std::string jointUIDs[] =
+const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 {
-  "r_shoulder_pitch",
-  "l_shoulder_pitch",
-  "r_shoulder_roll",
-  "l_shoulder_roll",
-  "r_shoulder_yaw",
-  "l_shoulder_yaw",
-  "r_elbow",
-  "l_elbow",
-  "r_wrist_yaw1",
-  "l_wrist_yaw1",
-  "r_wrist_roll",
-  "l_wrist_roll",
-  "r_wrist_yaw2",
-  "l_wrist_yaw2",
-  "r_hip_yaw",
-  "l_hip_yaw",
-  "r_hip_roll",
-  "l_hip_roll",
-  "r_hip_pitch",
-  "l_hip_pitch",
-  "r_knee",
-  "l_knee",
-  "r_ankle_pitch",
-  "l_ankle_pitch",
-  "r_ankle_roll",
-  "l_ankle_roll",
-  "waist_pan",
-  "waist_tilt",
-  "head_pan",
-  "head_tilt",
-  "r_f0_j0",        // r_hand_thumb
-  "l_f0_j0",        // l_hand_thumb
-  "r_f1_j0",        // r_hand_index_finger
-  "l_f1_j0"        // l_hand_index_finger
-
+  0,        // r_shoulder_pitch
+  0,        // l_shoulder_pitch
+  -125500,  // r_shoulder_roll
+  125500,   // l_shoulder_roll
+  125500,   // r_shoulder_yaw
+  -125500,  // l_shoulder_yaw
+  -62750,   // r_elbow
+  62750,    // l_elbow
+  0,        // r_wrist_yaw1
+  0,        // l_wrist_yaw1
+  0,        // r_wrist_roll
+  0,        // l_wrist_roll
+  0,        // r_wrist_yaw2
+  0,        // l_wrist_yaw2
+  0,        // r_hip_yaw
+  0,        // l_hip_yaw
+  0,        // r_hip_roll
+  0,        // l_hip_roll
+  0,        // r_hip_pitch
+  0,        // l_hip_pitch
+  62750,    // r_knee
+  -62750,   // l_knee
+  0,        // r_ankle_pitch
+  0,        // l_ankle_pitch
+  0,        // r_ankle_roll
+  0,        // l_ankle_roll
+  0,        // waist_pan
+  0,        // waist_tilt
+  0,        // head_pan
+  0,        // head_tilt
+  -504,     //r_f0_j0	// r_hand_thumb
+  -751,     //l_f0_j0	// l_hand_thumb
+  -434,     //r_f1_j0	// r_hand_index_finger
+  -621,     //l_f1_j0	// l_hand_index_finger
+  0,        // r_hand_middle_finger
+  0,        // l_hand_middle_finger
+  0         // waist_lidar
 };
-
 
 
 ThorMangFallingController::ThorMangFallingController() : falling_state(Disabled)
@@ -55,7 +54,7 @@ ThorMangFallingController::ThorMangFallingController() : falling_state(Disabled)
 }
 
 
-bool ThorMangFallingController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh)
+bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw, ros::NodeHandle& nh)
 {
     nh.param("rollThresholdPositive", rollThresholdPositive, 0.245);
     nh.param("rollThresholdNegative", rollThresholdNegative, -0.325);
@@ -63,29 +62,22 @@ bool ThorMangFallingController::init(hardware_interface::PositionJointInterface 
     nh.param("pitchThresholdNegative", pitchThresholdNegative, -0.15);
     nh.param("fallPoseTime", fallPoseTime, 0.500);
 
-    nh.getParam("jointIds", jointIds);
-    nh.getParam("jointValues", jointValues);
-
     nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
 
     action_client.reset(new ChangeControlModeActionClient(control_mode_switch_name, true));
 
-    //imu_sensor_handle = hw->getHandle("pelvis_imu");
+    imu_sensor_handle = hw->getHandle("pelvis_imu");
 
     falling_state = Disabled;
 
-for (unsigned int id = 1; id < joint_count+1; id++)
-  {
-      try
-      {
-        hw->getHandle(jointUIDs[id-1]);
-      }
-      catch (hardware_interface::HardwareInterfaceException e)
-      {
-        ROS_ERROR_STREAM("[PreviewWalking] Can't find joint '" << jointUIDs[id-1] << "' in hardware interface. Error: " << e.what());
-        return false;
-      }
-  }
+    if (MotionStatus::m_CurrentJoints.size() != 0)
+    {
+      m_RobotInfo = MotionStatus::m_CurrentJoints;
+    }
+    else
+    {
+      ROS_WARN("MotionStatus is not initialized");
+    }
 
     return true;
 }
@@ -143,7 +135,6 @@ void ThorMangFallingController::Process()
 
 bool ThorMangFallingController::checkFalling()
 {
-	return false;
     const double* imu_orientation = imu_sensor_handle.getOrientation();
 
     double roll = 0, pitch = 0, yaw = 0;
@@ -191,11 +182,12 @@ void ThorMangFallingController::disableTorque(){
     ROS_INFO("disable torque!");
     claimJoints();
     MotionManager::GetInstance()->EnableLights(false);
+
     for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
     {
-      ROS_INFO("Torque off: %d", joint_index);
       MotionManager::GetInstance()->SetTorqueOn(m_RobotInfo[joint_index], false);
     }
+
 }
 
 
@@ -232,17 +224,35 @@ void ThorMangFallingController::modeSwitchFeedbackCallback(const vigir_humanoid_
 
 void ThorMangFallingController::claimJoints()
 {
-  for(unsigned int jointIndex = 0; jointIndex < 35; jointIndex++)
-  {
-    int id = jointIndex;
-    if(id >= 15 && id <=26)
+    for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
     {
-      MotionStatus::m_EnableList[id-1].uID = uID;
+      if (m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
+      {
+        ROS_WARN("Robot has joint with invalid id: %u", m_RobotInfo[joint_index].m_ID);
+        continue;
+      }
+
+      unsigned int id_index = m_RobotInfo[joint_index].m_ID-1;
+
+      // activate control
+      MotionStatus::m_EnableList[id_index].uID = uID;
     }
-    if((id == 1 || id ==2 || id == 7|| id == 8))
-      MotionStatus::m_EnableList[id-1].uID = uID;
-  }
 }
+
+void ThorMangFallingController::setJointsToPose(){
+    for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+    {
+      int id_index = m_RobotInfo[joint_index].m_ID-1;
+
+      if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
+        continue;
+
+      double value = 0;
+
+      m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
+    }
+}
+
 }
 
 PLUGINLIB_EXPORT_CLASS(Thor::ThorMangFallingController, controller_interface::ControllerBase)
