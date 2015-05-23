@@ -79,6 +79,7 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
       ROS_WARN("MotionStatus is not initialized");
     }
 
+    testing_fall_timer = ros::WallTime::now() + ros::WallDuration(2000); //TODO remove me. Important
     return true;
 }
 
@@ -135,6 +136,14 @@ void ThorMangFallingController::Process()
 
 bool ThorMangFallingController::checkFalling()
 {
+    //TODO remove
+    ros::WallTime current = ros::WallTime::now();
+    if( current > testing_fall_timer){
+        return true;
+    }
+
+    //TODO remove end
+
     const double* imu_orientation = imu_sensor_handle.getOrientation();
 
     double roll = 0, pitch = 0, yaw = 0;
@@ -156,6 +165,12 @@ bool ThorMangFallingController::checkFalling()
 
 void ThorMangFallingController::goIntoFallPose(){
     ROS_INFO("Going into FALL!");
+    ROS_WARN("Speed LIMIT!!!");
+    limitSpeed();
+
+    setJoint(25, -0.09);
+    setJoint(26, 0.09);
+
     if(fallingPose == PoseFront){
         ROS_INFO("Falling pose FRONT");
     }else{
@@ -252,6 +267,33 @@ void ThorMangFallingController::setJointsToPose(){
       m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
     }
 }
+
+void ThorMangFallingController::setJoint(unsigned int joint_index, double value){
+    if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1){
+        ROS_ERROR("Trying to operate on invalid joint: %d", joint_index);
+        return;
+    }
+
+    int id_index = m_RobotInfo[joint_index].m_ID-1;
+    m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
+}
+
+void ThorMangFallingController::limitSpeed(){
+    for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+    {
+      if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
+        continue;
+
+      int id = m_RobotInfo[joint_index].m_ID;
+
+      int error = 0;
+      m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error);
+      m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 1000, &error);
+
+      ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
+    }
+}
+
 
 }
 
