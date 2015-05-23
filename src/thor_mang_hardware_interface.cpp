@@ -721,6 +721,7 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
                                                                left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
 
       has_foot_ft_offsets_in_air = true;
+      // Now reset the ft sensors for ros
       for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
       {
         resetFtSensor(i);
@@ -761,8 +762,11 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
       has_ft_offsets[ft_sensor_index] = true;
       // set offset
       ft_compensation[ft_sensor_index].setBias(force_torque_offset[ft_sensor_index]);
-      // ROS_INFO_STREAM("Ft measurement stopped. New offset for " << ftSensorUIDs[ft_sensor_index] << ": " << std::endl << force_torque_offset[ft_sensor_index]);
-      ROS_INFO("Robot setup finished! You can place the robot on ground now.");
+      ROS_INFO_STREAM("FT bias for " << ftSensorUIDs[ft_sensor_index] << ": " <<
+                      force_torque_offset[ft_sensor_index](0) << ", " << force_torque_offset[ft_sensor_index](1) << ", " <<
+                      force_torque_offset[ft_sensor_index](2) << ", " << force_torque_offset[ft_sensor_index](3) << ", " <<
+                      force_torque_offset[ft_sensor_index](4) << ", " << force_torque_offset[ft_sensor_index](5));
+      ROS_INFO_THROTTLE(1, "Robot setup finished! You can place the robot on ground now.");
     }
   }
 }
