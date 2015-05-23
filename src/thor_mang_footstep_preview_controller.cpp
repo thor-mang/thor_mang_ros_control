@@ -351,11 +351,20 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     if (total_steps_added > 0)
       std::advance(step_map_itr, total_steps_added-1);
     for(; step_map_itr != steps.end(); step_map_itr++)
+{
+      ROS_WARN("[%i]", step_map_itr->second.step_index);
       step_plan.steps.push_back(step_map_itr->second);
+}
 
     ROS_INFO("[PreviewWalking] Converting step plan...");
+
     Thor::StepData ref_step_data;
     PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
+
+      ROS_INFO("REF: --------------------------------");
+      ROS_INFO("%s", thor_mang_footstep_planning::toString(ref_step_data).c_str());
+      ROS_INFO("------------------------------------");
+
     std::vector<StepData> step_data_list;
     step_data_list.push_back(ref_step_data);
     if (!thor_mang_footstep_planning::operator<<(step_data_list, step_plan))
