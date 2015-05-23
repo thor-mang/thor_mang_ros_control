@@ -46,20 +46,37 @@ const std::string jointUIDs[] =
 namespace Thor
 {
 ThorMangFootstepPreviewController::ThorMangFootstepPreviewController()
-  : system_control_unit_time_sec(MotionModule::TIME_UNIT),
-    claim_arms(true),
-    has_imu_bias(false),
-    has_ft_bias(false),
-    current_imu_measurements(0),
-    current_ft_measurements(0),
-    max_imu_measurements(250),
-    max_ft_measurements(250)
+  : system_control_unit_time_sec(MotionModule::TIME_UNIT)
+  , claim_arms(true)
+  , remaining_steps(0)
+  , first_changeable_step(0)
+  , total_steps_added(0)
+  , step_queue_changed(false)
+  , current_imu_measurements(0)
+  , max_imu_measurements(250)
+  , current_ft_measurements(0)
+  , max_ft_measurements(250)
 {
   uID = const_cast<char*>("thor_mang_footstep_preview_controller");
+
+  imu_bias[0] = 0;
+  imu_bias[1] = 0;
+
+  for (unsigned int i = 0; i < 12; i++)
+    ft_bias_on_ground[i] = 0;
+
+  MotionManager::GetInstance()->AddModule(this);
+}
+
+ThorMangFootstepPreviewController::~ThorMangFootstepPreviewController()
+{
+  Thor::MotionManager::GetInstance()->RemoveModule(this);
 }
 
 bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointInterface *hw, ros::NodeHandle& nh)
 {
+  PreviewControlWalking::GetInstance()->Initialize();
+
   // Load params
   std::string execute_step_plan_topic;
   nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
@@ -110,151 +127,74 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   return true;
 }
 
-void ThorMangFootstepPreviewController::update(const ros::Time& time, const ros::Duration& period)
-{
-  if (!has_ft_bias)
-    addFtData();
-
-  if (!has_imu_bias)
-    addImuData();
-
-  if (goal_waiting && has_ft_bias && has_imu_bias) {
-    goal_waiting = false;
-    executeStepPlanAction(execute_step_plan_as);
-  }
-
-  // Nothing to do here since robotis has its own process function
-  if (PreviewControlWalking::GetInstance()->IsRunning()) {
-    if (PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData() != remaining_steps) {
-      remaining_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
-      ROS_INFO_STREAM("[PreviewWalking] Remaining steps: " << remaining_steps << "/" << total_steps);
-      ROS_INFO_STREAM("[PreviewWalking] Currently executing: " << total_steps - remaining_steps << ", Last executed: " << total_steps - remaining_steps -1);
-      ROS_INFO_STREAM("[PreviewWalking] -----------------------------------------------------");
-      vigir_footstep_planning::msgs::ExecuteStepPlanFeedback feedback;
-      feedback.currently_executing_step_index = total_steps - remaining_steps;
-      feedback.first_changeable_step_index = total_steps - remaining_steps +1;
-      feedback.last_performed_step_index = total_steps - remaining_steps -1;
-      execute_step_plan_as->publishFeedback(feedback);
-    }
-  } else {
-    if (execute_step_plan_as->isActive()) {
-      ROS_INFO("[PreviewWalking] Walking finished!");
-
-      vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
-      execute_step_plan_as->setSucceeded(result);
-    }
-  }
-}
-
-void ThorMangFootstepPreviewController::starting(const ros::Time& time)
+void ThorMangFootstepPreviewController::starting(const ros::Time& /*time*/)
 {
   claimJoints();
 
   ROS_INFO("[PreviewWalking] Controller '%s' is starting.", uID);
-  MotionManager::GetInstance()->AddModule(this);
 
-  if (!has_ft_bias)
-  {
-    ROS_INFO("[PreviewWalking] Init IMU data");
-    InitImuData();
-  }
+  steps.clear();
 
-  if (!has_imu_bias)
-  {
-    ROS_INFO("[PreviewWalking] Init FT data");
-    InitFtDataOnGround();
-  }
+  initWalkingParameters();
 
-  goal_waiting = false;
-
-  PreviewControlWalking::GetInstance()->Start();
-  ROS_INFO("[PreviewWalking] Footstep controller init successful.");
+  ROS_INFO("[PreviewWalking] Footstep controller init done.");
 }
 
 void ThorMangFootstepPreviewController::stopping(const ros::Time& /*time*/)
 {
   ROS_INFO("[PreviewWalking] Controller '%s' stopping.", uID);
   PreviewControlWalking::GetInstance()->Stop();
-  Thor::MotionManager::GetInstance()->RemoveModule(this);
+  steps.clear();
   unclaimJoints();
 }
 
 void ThorMangFootstepPreviewController::Initialize()
 {
-  PreviewControlWalking::GetInstance()->Initialize();
   last_call = ros::Time::now();
   system_control_unit_time_sec = MotionModule::TIME_UNIT;
 }
 
-void ThorMangFootstepPreviewController::Process()
+bool ThorMangFootstepPreviewController::initImuData()
 {
-  PreviewControlWalking::GetInstance()->Process();
-  m_RobotInfo = PreviewControlWalking::GetInstance()->m_RobotInfo;
-
-  ros::Time current_time = ros::Time::now();
-  system_control_unit_time_sec += ((current_time - last_call).toSec() - system_control_unit_time_sec) * 0.01; // low pass filter
-  last_call = current_time;
-}
-
-void ThorMangFootstepPreviewController::InitImuData()
-{
-  has_imu_bias = false;
-  current_imu_measurements = 0;
-  imu_bias[0] = 0;
-  imu_bias[1] = 0;
-}
-
-void ThorMangFootstepPreviewController::InitFtDataOnGround()
-{
-  for (unsigned int i = 0; i < 12; i++) {
-    ft_bias_on_ground[i] = 0;
-  }
-  has_ft_bias = false;
-  current_ft_measurements = 0;
-}
-
-void ThorMangFootstepPreviewController::addImuData()
-{
-  if (current_imu_measurements++ < max_imu_measurements)
+  if (current_imu_measurements < max_imu_measurements)
   {
     imu_bias[0] += MotionStatus::EulerAngleX; // Roll
     imu_bias[1] += MotionStatus::EulerAngleY; // Pitch
-  }
-  else
-  {
-    for (unsigned int i = 0; i < 2; i++)
-    {
-      imu_bias[i] = imu_bias[i]/(double)max_imu_measurements;
-    }
-    ROS_INFO_STREAM("[PreviewWalking] Imu initialized with: " << imu_bias[0] << ", " << imu_bias[1]);
-    PreviewControlWalking::GetInstance()->SetInitAngleinRad(imu_bias[0], imu_bias[1]);
-    has_imu_bias = true;
-  }
-}
 
-void ThorMangFootstepPreviewController::addFtData()
-{
-  if (!has_ft_bias)
-  {
-    if (current_ft_measurements++ < max_ft_measurements)
+    if (current_imu_measurements++ >= max_imu_measurements)
     {
-      ft_bias_on_ground[0]  += MotionStatus::R_LEG_FX;
-      ft_bias_on_ground[1]  += MotionStatus::R_LEG_FY;
-      ft_bias_on_ground[2]  += MotionStatus::R_LEG_FZ;
-      ft_bias_on_ground[3] += MotionStatus::R_LEG_TX;
-      ft_bias_on_ground[4] += MotionStatus::R_LEG_TY;
-      ft_bias_on_ground[5] += MotionStatus::R_LEG_TZ;
+      for (unsigned int i = 0; i < 2; i++)
+        imu_bias[i] = imu_bias[i]/static_cast<double>(max_imu_measurements);
 
-      ft_bias_on_ground[6]  += MotionStatus::L_LEG_FX;
-      ft_bias_on_ground[7]  += MotionStatus::L_LEG_FY;
-      ft_bias_on_ground[8]  += MotionStatus::L_LEG_FZ;
-      ft_bias_on_ground[9] += MotionStatus::L_LEG_TX;
-      ft_bias_on_ground[10] += MotionStatus::L_LEG_TY;
-      ft_bias_on_ground[11] += MotionStatus::L_LEG_TZ;
+      ROS_INFO_STREAM("[PreviewWalking] Imu initialized with: " << imu_bias[0] << ", " << imu_bias[1]);
+      PreviewControlWalking::GetInstance()->SetInitAngleinRad(imu_bias[0], imu_bias[1]);
     }
     else
+      return false;
+  }
+  return true;
+}
+
+bool ThorMangFootstepPreviewController::initFtDataOnGround()
+{
+  if (current_ft_measurements < max_ft_measurements)
+  {
+    ft_bias_on_ground[0]  += MotionStatus::R_LEG_FX;
+    ft_bias_on_ground[1]  += MotionStatus::R_LEG_FY;
+    ft_bias_on_ground[2]  += MotionStatus::R_LEG_FZ;
+    ft_bias_on_ground[3]  += MotionStatus::R_LEG_TX;
+    ft_bias_on_ground[4]  += MotionStatus::R_LEG_TY;
+    ft_bias_on_ground[5]  += MotionStatus::R_LEG_TZ;
+
+    ft_bias_on_ground[6]  += MotionStatus::L_LEG_FX;
+    ft_bias_on_ground[7]  += MotionStatus::L_LEG_FY;
+    ft_bias_on_ground[8]  += MotionStatus::L_LEG_FZ;
+    ft_bias_on_ground[9]  += MotionStatus::L_LEG_TX;
+    ft_bias_on_ground[10] += MotionStatus::L_LEG_TY;
+    ft_bias_on_ground[11] += MotionStatus::L_LEG_TZ;
+
+    if (current_ft_measurements++ >= max_ft_measurements)
     {
-      has_ft_bias = true;
       std::stringstream ss;
       for (unsigned int i = 0; i < 12; i++)
       {
@@ -263,13 +203,18 @@ void ThorMangFootstepPreviewController::addFtData()
         if (i == 5) ss << "\n";
         else if (i != 11) ss << ", ";
       }
+
       ROS_INFO_STREAM("[PreviewWalking] Ft initialized with: " << ss.str());
-      PreviewControlWalking::GetInstance()->SetInitForceOntheGround(ft_bias_on_ground[0], ft_bias_on_ground[1], ft_bias_on_ground[2],
-                                                                    ft_bias_on_ground[3], ft_bias_on_ground[4], ft_bias_on_ground[5],
-                                                                    ft_bias_on_ground[6], ft_bias_on_ground[7], ft_bias_on_ground[8],
-                                                                    ft_bias_on_ground[9], ft_bias_on_ground[10], ft_bias_on_ground[11]);
+      PreviewControlWalking::GetInstance()->SetInitForceOntheGround(
+          ft_bias_on_ground[0], ft_bias_on_ground[1], ft_bias_on_ground[2],
+          ft_bias_on_ground[3], ft_bias_on_ground[4], ft_bias_on_ground[5],
+          ft_bias_on_ground[6], ft_bias_on_ground[7], ft_bias_on_ground[8],
+          ft_bias_on_ground[9], ft_bias_on_ground[10], ft_bias_on_ground[11]);
     }
+    else
+      return false;
   }
+  return true;
 }
 
 void ThorMangFootstepPreviewController::initWalkingParameters()
@@ -284,7 +229,6 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
 
   PreviewControlWalking::GetInstance()->HIP_PITCH_OFFSET = hip_pitch_offset;//7.0;//6.0
   PreviewControlWalking::GetInstance()->ANKLE_PITCH_OFFSET = ankle_pitch_offset;//0.0;
-  //PreviewControlWalking::GetInstance()->Initialize(); /// TODO: Shouldn't be necessary
 
   PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO = walk_stabilizer_gain_ratio;//3.0;//3.5;
   PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = imu_gyro_gain_ratio; // 7.31*0.01;
@@ -348,73 +292,237 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   }
 }
 
-void ThorMangFootstepPreviewController::StartWalking()
-{
-  if(!PreviewControlWalking::GetInstance()->IsRunning())
-    PreviewControlWalking::GetInstance()->Start();
-}
-
 void ThorMangFootstepPreviewController::claimJoints()
 {
-  for(unsigned int jointIndex = 0; jointIndex < 35; jointIndex++)
+  for(unsigned int jointIndex = 0; jointIndex < 30; jointIndex++)
   {
     int id = jointIndex;
     if(id >= 15 && id <=26)
-    {
       MotionStatus::m_EnableList[id-1].uID = uID;
-    }
-    if(claim_arms && (id == 1 || id ==2 || id == 7|| id == 8))
+    else if(claim_arms && (id == 1 || id ==2 || id == 7|| id == 8))
       MotionStatus::m_EnableList[id-1].uID = uID;
   }
 }
 
 void ThorMangFootstepPreviewController::unclaimJoints()
 {
-  for (unsigned int id = 1; id < joint_count+1; id++)
+  for(unsigned int jointIndex = 0; jointIndex < 30; jointIndex++)
   {
-    if((id >= 15 && id <=26) || id == 1 || id ==2 || id == 7|| id == 8)
+    int id = jointIndex;
+    if(id >= 15 && id <=26)
+      MotionStatus::m_EnableList[id-1].uID = const_cast<char*>("thor_mang_hardware_interface");
+    else if(claim_arms && (id == 1 || id ==2 || id == 7|| id == 8))
       MotionStatus::m_EnableList[id-1].uID = const_cast<char*>("thor_mang_hardware_interface");
   }
 }
 
+void ThorMangFootstepPreviewController::StartWalking()
+{
+  if(!PreviewControlWalking::GetInstance()->IsRunning())
+  {
+    ROS_INFO("[PreviewWalking] Start walking!");
+    PreviewControlWalking::GetInstance()->Start();
+  }
+}
+
+void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+{
+  bool imu_ready = initImuData();
+  bool ft_ready = initFtDataOnGround();
+
+  if (!imu_ready || !ft_ready)
+    return;
+
+  boost::mutex::scoped_lock lock(steps_mutex);
+
+  if (step_queue_changed)
+  {
+    step_queue_changed = false;
+
+    int remaining_unreserved_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
+
+    for(int i = 0; i < remaining_unreserved_steps; i++)
+      PreviewControlWalking::GetInstance()->EraseLastStepData();
+    total_steps_added -= remaining_unreserved_steps;
+
+    ROS_INFO("[PreviewWalking] Generting step plan update...");
+    vigir_footstep_planning_msgs::StepPlan step_plan;
+    std::map<int, vigir_footstep_planning_msgs::Step>::const_iterator step_map_itr = steps.begin();
+    std::advance(step_map_itr, total_steps_added);
+    for(; step_map_itr != steps.end(); step_map_itr++)
+      step_plan.steps.push_back(step_map_itr->second);
+
+    ROS_INFO("[PreviewWalking] Converting step plan...");
+    Thor::StepData ref_step_data;
+    PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
+    std::vector<StepData> step_data_list;
+    step_data_list.push_back(ref_step_data);
+    if (!thor_mang_footstep_planning::operator<<(step_data_list, step_plan))
+    {
+      ROS_ERROR("[PreviewWalking] Error during step plan conversion!");
+      return;
+    }
+
+    ROS_INFO("[PreviewWalking] Spooling step plan update...");
+    std::vector<StepData>::iterator step_data_itr = step_data_list.begin();
+
+    // skip walk start entry if already walking (-> stitching mode)
+    if (PreviewControlWalking::GetInstance()->IsRunning())
+      step_data_itr++;
+
+    for (; step_data_itr != step_data_list.end(); step_data_itr++)
+    {
+      StepData step_data = *step_data_itr;
+
+      ROS_INFO("%s", thor_mang_footstep_planning::toString(step_data).c_str());
+      ROS_INFO("------------------------------------");
+
+      PreviewControlWalking::GetInstance()->AddStepData(step_data);
+    }
+
+    total_steps_added = steps.size()+1;
+
+    // trigger walking engine
+    StartWalking();
+
+    return;
+  }
+
+  // Nothing to do here since robotis has its own process function
+  if (PreviewControlWalking::GetInstance()->IsRunning())
+  {
+    if (PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData() != remaining_steps)
+    {
+      remaining_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
+
+      ROS_INFO_STREAM("[PreviewWalking] Remaining steps: " << remaining_steps << "/" << total_steps_added);
+      ROS_INFO_STREAM("[PreviewWalking] Currently executing: " << total_steps_added - remaining_steps << ", Last executed: " << total_steps_added - remaining_steps -1);
+      ROS_INFO_STREAM("[PreviewWalking] -----------------------------------------------------");
+
+      vigir_footstep_planning::msgs::ExecuteStepPlanFeedback feedback;
+      feedback.currently_executing_step_index = total_steps_added - remaining_steps + 1;
+      feedback.first_changeable_step_index = feedback.currently_executing_step_index +1;
+      feedback.last_performed_step_index = feedback.currently_executing_step_index -1;
+      execute_step_plan_as->publishFeedback(feedback);
+    }
+  }
+  else if (execute_step_plan_as->isActive())
+  {
+    ROS_INFO("[PreviewWalking] Walking finished!");
+    vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+    execute_step_plan_as->setSucceeded(result);
+
+    steps.clear();
+    total_steps_added = 0;
+  }
+}
+
+void ThorMangFootstepPreviewController::Process()
+{
+  PreviewControlWalking::GetInstance()->Process();
+  m_RobotInfo = PreviewControlWalking::GetInstance()->m_RobotInfo;
+
+  ros::Time current_time = ros::Time::now();
+  system_control_unit_time_sec += ((current_time - last_call).toSec() - system_control_unit_time_sec) * 0.01; // low pass filter
+  last_call = current_time;
+}
+
 void ThorMangFootstepPreviewController::executeStepPlanAction(ActionServer::Ptr& as)
 {
-  if (!(has_imu_bias && has_ft_bias)) {
-    goal_waiting = true;
-    ROS_INFO("[PreviewWalking] Received new step plan but waiting for sensor reset.");
-    return;
-  }
   const vigir_footstep_planning::msgs::ExecuteStepPlanGoalConstPtr& goal(as->acceptNewGoal());
-  vigir_footstep_planning::msgs::StepPlan step_plan = goal->step_plan;
 
-  initWalkingParameters();
-
-  Thor::StepData ref_step_data;
-  PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
-
-  ROS_INFO("[PreviewWalking] Converting step plan...");
-  std::vector<StepData> step_data_list;
-  step_data_list.push_back(ref_step_data);
-  if (!thor_mang_footstep_planning::operator<<(step_data_list, step_plan)) {
-    ROS_ERROR("[PreviewWalking] Error during step plan conversion!");
+  // check if new goal was preempted in the meantime
+  if (as->isPreemptRequested())
+  {
+    as->setPreempted();
     return;
   }
 
-  ROS_INFO("[PreviewWalking] Spooling step plan...");
-  for (std::vector<StepData>::iterator itr = step_data_list.begin(); itr != step_data_list.end(); itr++)
+  const vigir_footstep_planning::msgs::StepPlan& step_plan = goal->step_plan;
+
+  // check for execution status
+  if (steps.empty())
   {
-    StepData step_data = *itr;
-
-    ROS_INFO("%s", thor_mang_footstep_planning::toString(step_data).c_str());
-    ROS_INFO("------------------------------------");
-
-    PreviewControlWalking::GetInstance()->AddStepData(step_data);
+    if (step_plan.steps.empty()) // do nothing case
+    {
+      ROS_INFO("[PreviewWalking] Received empty plan.");
+      vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+      result.status.status = vigir_footstep_planning::msgs::FootstepExecutionStatus::ERR_EMPTY_PLAN;
+      execute_step_plan_as->setAborted(result);
+      return;
+    }
+    else // check step plan consistency
+    {
+      if (step_plan.steps.front().step_index != 0)
+      {
+        ROS_ERROR("[PreviewWalking] Received step plan which not starts with 0!");
+        vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+        result.status.status = vigir_footstep_planning::msgs::FootstepExecutionStatus::ERR_INVALID_PLAN;
+        execute_step_plan_as->setAborted(result);
+        return;
+      }
+    }
+  }
+  else
+  {
+    if (step_plan.steps.empty()) // empty plan triggers stop
+    {
+      ROS_INFO("[PreviewWalking] Received empty plan.");
+      {
+        boost::mutex::scoped_lock lock(steps_mutex);
+        steps.clear();
+        step_queue_changed = true;
+      }
+      return;
+    }
+    else if (steps.rbegin()->first+1 < step_plan.steps.front().step_index) // check for stitching option
+    {
+      ROS_ERROR("[PreviewWalking] Received step plan with start index %i, but expected at maximum %i!", step_plan.steps.front().step_index, steps.rbegin()->first+1);
+      vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+      result.status.status = vigir_footstep_planning::msgs::FootstepExecutionStatus::ERR_INVALID_INCONSISTENT_INDICES;
+      execute_step_plan_as->setAborted(result);
+      return;
+    }
   }
 
-  ROS_INFO("[PreviewWalking] Start walking!");
-  StartWalking();
-  remaining_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
-  total_steps = step_plan.steps.size();
+  /// got new step plan, going to stitch
+
+  // check consisty
+  int step_index = step_plan.steps.front().step_index;
+  for (std::vector<vigir_footstep_planning::msgs::Step>::const_iterator itr = step_plan.steps.begin(); itr != step_plan.steps.end(); itr++)
+  {
+    if (step_index++ != itr->step_index)
+    {
+      ROS_ERROR("[PreviewWalking] Received step plan with incosistent step indices!");
+      vigir_footstep_planning::msgs::ExecuteStepPlanResult result;
+      result.status.status = vigir_footstep_planning::msgs::FootstepExecutionStatus::ERR_INVALID_INCONSISTENT_INDICES;
+      execute_step_plan_as->setAborted(result);
+      return;
+    }
+  }
+
+  boost::mutex::scoped_lock lock(steps_mutex);
+
+  ROS_INFO("[PreviewWalking] Stitch/Add step plan with %lu steps.", step_plan.steps.size());
+
+  // we are good to enqueue steps
+  int max_step_index;
+  for (std::vector<vigir_footstep_planning::msgs::Step>::const_iterator itr = step_plan.steps.begin(); itr != step_plan.steps.end(); itr++)
+  {
+    steps[itr->step_index] = *itr;
+    max_step_index = itr->step_index;
+  }
+
+  // remove old steps
+  for (std::map<int, vigir_footstep_planning_msgs::Step>::iterator itr = steps.begin(); itr != steps.end();)
+  {
+    if (itr->first > max_step_index)
+      steps.erase(itr++);
+    else
+      itr++;
+  }
+
+  step_queue_changed = true;
 }
 
 void ThorMangFootstepPreviewController::stepPlanPreempted()

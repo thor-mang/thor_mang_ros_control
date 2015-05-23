@@ -34,6 +34,8 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 
+#include <boost/thread/mutex.hpp>
+
 // ros control
 #include <controller_interface/controller.h>
 #include <pluginlib/class_list_macros.h>
@@ -62,6 +64,7 @@ class ThorMangFootstepPreviewController
 {
 public:
   ThorMangFootstepPreviewController();
+  ~ThorMangFootstepPreviewController();
 
   // ros control
   bool init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh);
@@ -78,16 +81,15 @@ public:
   void StartWalking();
 
 protected:
-  void InitImuData();
-  void addImuData();
-  void InitFtDataOnGround();
-  void addFtData();
+  bool initImuData();
+  bool initFtDataOnGround();
 
   void initWalkingParameters();
   void claimJoints();
   void unclaimJoints();
 
   bool claim_arms;
+
   double hip_pitch_offset;
   double ankle_pitch_offset;
   double walk_stabilizer_gain_ratio;
@@ -107,34 +109,41 @@ protected:
   void executeStepPlanAction(ActionServer::Ptr& as);
   void stepPlanPreempted();
 
-  int remaining_steps;
-  int total_steps;
-  bool goal_waiting;
+  // dyn_reconfigure_callback
+  void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
 
   // action servers
   ActionServer::Ptr execute_step_plan_as;
 
-  //dyn_reconfigure_callback
-  void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
+  // dynamic reconfigure
+  typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
+  boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
 
   // time measurement to get current rate
   ros::Time last_call;
   double system_control_unit_time_sec;
 
-	typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
-  boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
+  // pending step plan
+  std::map<int, vigir_footstep_planning_msgs::Step> steps;
 
-  // Sensor resetting
-  bool has_imu_bias;
-  bool has_ft_bias;
+  // step execution status
+  int remaining_steps;
+  int first_changeable_step;
+  int total_steps_added;
+  bool step_queue_changed;
+
+  // IMU bias
   unsigned int current_imu_measurements;
-  unsigned int current_ft_measurements;
   unsigned int max_imu_measurements;
-  unsigned int max_ft_measurements;
   double imu_bias[2];
+
+  // FT bias
+  unsigned int current_ft_measurements;
+  unsigned int max_ft_measurements;
   double ft_bias_on_ground[12];
 
-
+  // mutex
+  mutable boost::mutex steps_mutex;
 };
 }
 
