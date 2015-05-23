@@ -59,6 +59,9 @@ protected:
     void goIntoFallPose();
     bool checkTorqueOff();
     void disableTorque();
+    void setJoint(unsigned int joint_index, double value);
+    void limitSpeed(); //Only for test!
+    ros::WallTime testing_fall_timer;
 
 private:
     void claimJoints();
