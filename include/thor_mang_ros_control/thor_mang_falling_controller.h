@@ -17,6 +17,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <vigir_humanoid_control_msgs/ChangeControlModeAction.h>
 
+#include <map>
+
 namespace Thor
 {
 
@@ -60,10 +62,14 @@ protected:
     bool checkTorqueOff();
     void disableTorque();
     void setJoint(unsigned int servo_id, double value);
+    void fallPose();
+    void fallPoseFront();
+    void fallPoseRear();
     void limitSpeed(); //Only for test!
     ros::WallTime testing_fall_timer;
 
 private:
+    void initJoints();
     void claimJoints();
     void setJointsToPose();
     double rollThresholdPositive;
@@ -73,8 +79,7 @@ private:
 
     double fallPoseTime;
 
-    std::vector<int> jointIds;
-    std::vector<double> jointValues;
+    std::map<unsigned int, unsigned int> servo_id_mapping;
 
     State falling_state;
 
@@ -86,6 +91,8 @@ private:
     hardware_interface::ImuSensorHandle imu_sensor_handle;
 
     ros::WallTime fallPoseDoneTime;
+
+    ros::WallTime torqueOffDoneTime;
 
     void modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result);
     void modeSwitchActiveCallback();

@@ -6,6 +6,8 @@
 namespace Thor
 {
 
+const bool test_falling = true; //TODO remove
+
 const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 {
     0,        // r_shoulder_pitch
@@ -85,7 +87,6 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
 
 void ThorMangFallingController::update(const ros::Time& time, const ros::Duration& period)
 {
-    ROS_INFO_THROTTLE(100,"[thor_mang_falling_controller] in state %d", falling_state);
     switch(falling_state){
     case Disabled:
         return;
@@ -93,21 +94,26 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
         if(checkFalling()){
             goIntoFallPose();
             falling_state = FallPose;
-            //sendInfoToControlModeSwitcher();
+            //sendInfoToControlModeSwitcher(); //TODO check this!
         }
         break;
     case FallPose:
+        fallPose();
         if(checkTorqueOff()){
-            disableTorque();
             falling_state = TorqueOff;
+            torqueOffDoneTime = ros::WallTime::now() + ros::WallDuration(5.0);
         }
         break;
     case TorqueOff:
+        disableTorque();
+        ros::WallTime current = ros::WallTime::now();
+        if( current > testing_fall_timer){
+            alling_state = Disabled;
+        }
         return;
     default:
         ROS_ERROR("Unknown state");
     }
-    ROS_INFO_THROTTLE(100,"[thor_mang_falling_controller] END update");
 
 }
 
@@ -119,7 +125,7 @@ void ThorMangFallingController::starting(const ros::Time& time)
     ROS_INFO("[thor_mang_falling_controller] Starting...");
 
     testing_fall_timer = ros::WallTime::now() + ros::WallDuration(5.0); //TODO remove me. Important
-    ROS_INFO("Testing fall!"); 
+    ROS_INFO("Testing fall!");
 }
 
 void ThorMangFallingController::stopping(const ros::Time& time)
@@ -140,11 +146,12 @@ void ThorMangFallingController::Process()
 bool ThorMangFallingController::checkFalling()
 {
     //TODO remove
+    if(test_falling){
     ros::WallTime current = ros::WallTime::now();
     if( current > testing_fall_timer){
         return true;
     }
-
+    }
     //TODO remove end
 
     const double* imu_orientation = imu_sensor_handle.getOrientation();
@@ -166,21 +173,27 @@ bool ThorMangFallingController::checkFalling()
     return false;
 }
 
-void ThorMangFallingController::goIntoFallPose(){
-    ROS_INFO("Going into FALL!");
-    ROS_WARN("Speed LIMIT!!!");
+void ThorMangFallingController::fallPose(){
     limitSpeed();
 
     claimJoints();
 
-fallingPose = PoseRear; //TODO remove
+    fallingPose = PoseRear; //TODO remove
     if(fallingPose == PoseFront){
         ROS_INFO("Falling pose FRONT");
+        fallPoseFront();
     }else{
         ROS_INFO("Falling pose REAR");
-   
-//ARMS
+        fallPoseRear();
+    }
+}
 
+void ThorMangFallingController::fallPoseFront(){
+    fallPoseRear();
+}
+
+void ThorMangFallingController::fallPoseRear(){
+    //ARMS
 
     setJoint(1, -0.79); //r_shoulder_pitch
     setJoint(2, 0.79); //l_shoulder_pitch
@@ -203,9 +216,7 @@ fallingPose = PoseRear; //TODO remove
     setJoint(13, 0.0); //r_wrist_yaw_2
     setJoint(14, 0.0); //l_wrist_yaw_2
 
-
-
-//LEGS
+    //LEGS
 
     setJoint(15, -0.01); //r_hip_yaw
     setJoint(16, 0.01); //l_hip_yaw
@@ -225,10 +236,10 @@ fallingPose = PoseRear; //TODO remove
     setJoint(25, -0.09);  //r_ankle_roll
     setJoint(26, 0.09); //l_ankle_roll
 
+}
 
-    }
-
-    fallPoseTime = 7.5;
+void ThorMangFallingController::goIntoFallPose(){
+    ROS_INFO("Going into FALL!");
     ROS_INFO("Torque off in %f",fallPoseTime);
     fallPoseDoneTime = (ros::WallTime::now() + ros::WallDuration(fallPoseTime));
     MotionManager::GetInstance()->EnableLights(true);
@@ -238,8 +249,7 @@ fallingPose = PoseRear; //TODO remove
 bool ThorMangFallingController::checkTorqueOff(){
     ros::WallTime current = ros::WallTime::now();
     if( current > fallPoseDoneTime ){
-	ROS_INFO("Fall pose done -> torque off");
-	ROS_INFO_STREAM("current: " << current << " fall: " << fallPoseDoneTime);
+        ROS_INFO("Fall pose done -> torque off");
         return true;
     }
     return false;
@@ -273,21 +283,7 @@ void ThorMangFallingController::sendInfoToControlModeSwitcher(){
 }
 
 
-void ThorMangFallingController::modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result){
-    if(state == actionlib::SimpleClientGoalState::SUCCEEDED){
-        //Good
-    }else{
-        //Need to try again
-    }
-}
 
-void ThorMangFallingController::modeSwitchActiveCallback(){
-
-}
-
-void ThorMangFallingController::modeSwitchFeedbackCallback(const vigir_humanoid_control_msgs::ChangeControlModeFeedbackConstPtr &feedback){
-
-}
 
 void ThorMangFallingController::claimJoints()
 {
@@ -320,20 +316,27 @@ void ThorMangFallingController::setJointsToPose(){
     }
 }
 
-void ThorMangFallingController::setJoint(unsigned int servo_id, double value){
+void ThorMangFallingController::initJoints(){
     for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
     {
+         servo_id_mapping[ m_RobotInfo[joint_index].m_ID ] = joint_index;
+    }
+}
+
+void ThorMangFallingController::setJoint(unsigned int servo_id, double value){
+        unsigned int joint_index = servo_id_mapping[servo_id];
+
         if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1){
             ROS_ERROR("Trying to operate on invalid joint: %d", joint_index);
             return;
         }
+
         if(m_RobotInfo[joint_index].m_ID == servo_id){
             int id_index = m_RobotInfo[joint_index].m_ID-1;
             m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
             ROS_INFO("Setting koint value for %d (%d): %f", servo_id, joint_index, value);
-	    return;
+            return;
         }
-    }
 }
 
 void ThorMangFallingController::limitSpeed(){
@@ -343,16 +346,23 @@ void ThorMangFallingController::limitSpeed(){
             continue;
 
         int id = m_RobotInfo[joint_index].m_ID;
-	
+
         int error = 0;
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 15, &error);
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 8000, &error);
-	ROS_INFO("Setting speed limit for %d", joint_index);
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 15, &error); //0 -> unlimited
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 8000, &error); //0 -> unlimited
+        ROS_INFO("Setting speed limit for %d", joint_index);
         ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
     }
 }
 
+void ThorMangFallingController::modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result){
+}
 
+void ThorMangFallingController::modeSwitchActiveCallback(){
+}
+
+void ThorMangFallingController::modeSwitchFeedbackCallback(const vigir_humanoid_control_msgs::ChangeControlModeFeedbackConstPtr &feedback){
+}
 }
 
 PLUGINLIB_EXPORT_CLASS(Thor::ThorMangFallingController, controller_interface::ControllerBase)
