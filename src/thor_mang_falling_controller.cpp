@@ -93,7 +93,7 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
         if(checkFalling()){
             goIntoFallPose();
             falling_state = FallPose;
-            sendInfoToControlModeSwitcher();
+            //sendInfoToControlModeSwitcher();
         }
         break;
     case FallPose:
@@ -118,14 +118,15 @@ void ThorMangFallingController::starting(const ros::Time& time)
     falling_state = Ready;
     ROS_INFO("[thor_mang_falling_controller] Starting...");
 
-    testing_fall_timer = ros::WallTime::now() + ros::WallDuration(2000); //TODO remove me. Important
-
+    testing_fall_timer = ros::WallTime::now() + ros::WallDuration(5.0); //TODO remove me. Important
+    ROS_INFO("Testing fall!"); 
 }
 
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
     Thor::MotionManager::GetInstance()->RemoveModule(this);
     falling_state = Disabled;
+    ROS_INFO("ThorMangFallingController::stopping");
 }
 
 void ThorMangFallingController::Initialize()
@@ -170,30 +171,78 @@ void ThorMangFallingController::goIntoFallPose(){
     ROS_WARN("Speed LIMIT!!!");
     limitSpeed();
 
+    claimJoints();
 
+fallingPose = PoseRear; //TODO remove
     if(fallingPose == PoseFront){
         ROS_INFO("Falling pose FRONT");
     }else{
         ROS_INFO("Falling pose REAR");
+   
+//ARMS
+
+
+    setJoint(1, -0.79); //r_shoulder_pitch
+    setJoint(2, 0.79); //l_shoulder_pitch
+
+    setJoint(3, 0.44); //r_shoulder_roll
+    setJoint(4, -0.44); //l_shoulder_roll
+
+    setJoint(5, 0.57); //r_shoulder_yaw
+    setJoint(6, -0.57); //l_shoulder_yaw
+
+    setJoint(7, 2.49); //r_elbow
+    setJoint(8, -2.49); //l_elbow
+
+    setJoint(9, -1.55); //r_wrist_yaw_1
+    setJoint(10, 1.55); //l_wrist_yaw_1
+
+    setJoint(11, 0.0); //r_wrist_roll
+    setJoint(12, 0.0); //l_wrist_roll
+
+    setJoint(13, 0.0); //r_wrist_yaw_2
+    setJoint(14, 0.0); //l_wrist_yaw_2
+
+
+
+//LEGS
+
+    setJoint(15, -0.01); //r_hip_yaw
+    setJoint(16, 0.01); //l_hip_yaw
+
+    setJoint(17, 0.09); //r_hip_roll
+    setJoint(18, -0.09); //l_hip_roll
+
+    setJoint(19, 1.57); //r_hip_pitch
+    setJoint(20, -1.57); //l_hip_pitch
+
+    setJoint(21, -2.49); //r_knee
+    setJoint(22, 2.49); //l_knee
+
+    setJoint(23, -0.91);  //r_ankle_pitch
+    setJoint(24, 0.91); //l_ankle_pitch
+
+    setJoint(25, -0.09);  //r_ankle_roll
+    setJoint(26, 0.09); //l_ankle_roll
+
+
     }
 
+    fallPoseTime = 7.5;
+    ROS_INFO("Torque off in %f",fallPoseTime);
     fallPoseDoneTime = (ros::WallTime::now() + ros::WallDuration(fallPoseTime));
     MotionManager::GetInstance()->EnableLights(true);
-
-    //TODO impl
-
-    claimJoints();
-
-    setJoint(25, -0.09);
-    setJoint(26, 0.09);
 
 }
 
 bool ThorMangFallingController::checkTorqueOff(){
     ros::WallTime current = ros::WallTime::now();
     if( current > fallPoseDoneTime ){
+	ROS_INFO("Fall pose done -> torque off");
+	ROS_INFO_STREAM("current: " << current << " fall: " << fallPoseDoneTime);
         return true;
     }
+    return false;
 }
 
 void ThorMangFallingController::disableTorque(){
@@ -281,7 +330,8 @@ void ThorMangFallingController::setJoint(unsigned int servo_id, double value){
         if(m_RobotInfo[joint_index].m_ID == servo_id){
             int id_index = m_RobotInfo[joint_index].m_ID-1;
             m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
-            return;
+            ROS_INFO("Setting koint value for %d (%d): %f", servo_id, joint_index, value);
+	    return;
         }
     }
 }
@@ -293,11 +343,11 @@ void ThorMangFallingController::limitSpeed(){
             continue;
 
         int id = m_RobotInfo[joint_index].m_ID;
-
+	
         int error = 0;
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error);
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 1000, &error);
-
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 15, &error);
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 8000, &error);
+	ROS_INFO("Setting speed limit for %d", joint_index);
         ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
     }
 }
