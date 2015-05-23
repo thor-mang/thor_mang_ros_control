@@ -348,7 +348,8 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     ROS_INFO("[PreviewWalking] Generting step plan update...");
     vigir_footstep_planning_msgs::StepPlan step_plan;
     std::map<int, vigir_footstep_planning_msgs::Step>::const_iterator step_map_itr = steps.begin();
-    std::advance(step_map_itr, total_steps_added);
+    if (total_steps_added > 0)
+      std::advance(step_map_itr, total_steps_added-1);
     for(; step_map_itr != steps.end(); step_map_itr++)
       step_plan.steps.push_back(step_map_itr->second);
 
