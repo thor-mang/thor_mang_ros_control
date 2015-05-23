@@ -35,14 +35,14 @@ typedef enum {
 }FallingPose;
 
 class ThorMangFallingController:
-        public controller_interface::Controller<hardware_interface::ImuSensorInterface>
+        public controller_interface::Controller<hardware_interface::PositionJointInterface>
         , public MotionModule
 {
 public:
     ThorMangFallingController();
 
     // ros control
-    bool init(hardware_interface::ImuSensorInterface* hw, ros::NodeHandle& nh);
+    bool init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh);
 
     void update(const ros::Time& time, const ros::Duration& period);
 
@@ -61,8 +61,7 @@ protected:
     void disableTorque();
 
 private:
-
-
+    void claimJoints();
     double rollThresholdPositive;
     double rollThresholdNegative;
     double pitchThresholdPositive;
