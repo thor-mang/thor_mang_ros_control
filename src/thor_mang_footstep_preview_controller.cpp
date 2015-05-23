@@ -380,7 +380,7 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
       PreviewControlWalking::GetInstance()->AddStepData(step_data);
     }
 
-    total_steps_added = steps.size()+1;
+    total_steps_added += step_data_list.size();
 
     // trigger walking engine
     StartWalking();
