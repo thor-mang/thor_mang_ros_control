@@ -345,25 +345,21 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
       PreviewControlWalking::GetInstance()->EraseLastStepData();
     total_steps_added -= remaining_unreserved_steps;
 
-    ROS_INFO("[PreviewWalking] Generting step plan update...");
+    ROS_INFO("[PreviewWalking] Generating step plan update...");
     vigir_footstep_planning_msgs::StepPlan step_plan;
     std::map<int, vigir_footstep_planning_msgs::Step>::const_iterator step_map_itr = steps.begin();
     if (total_steps_added > 0)
-      std::advance(step_map_itr, total_steps_added-1);
+      std::advance(step_map_itr, total_steps_added-1); // include initial step of sub footstep plan
     for(; step_map_itr != steps.end(); step_map_itr++)
-{
-      ROS_WARN("[%i]", step_map_itr->second.step_index);
       step_plan.steps.push_back(step_map_itr->second);
-}
 
     ROS_INFO("[PreviewWalking] Converting step plan...");
-
     Thor::StepData ref_step_data;
     PreviewControlWalking::GetInstance()->GetReferenceStepDatafotAddition(&ref_step_data);
 
-      ROS_INFO("REF: --------------------------------");
-      ROS_INFO("%s", thor_mang_footstep_planning::toString(ref_step_data).c_str());
-      ROS_INFO("------------------------------------");
+    ROS_INFO("Reference: -------------------------");
+    ROS_INFO("%s", thor_mang_footstep_planning::toString(ref_step_data).c_str());
+    ROS_INFO("------------------------------------");
 
     std::vector<StepData> step_data_list;
     step_data_list.push_back(ref_step_data);
@@ -374,13 +370,7 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     }
 
     ROS_INFO("[PreviewWalking] Spooling step plan update...");
-    std::vector<StepData>::iterator step_data_itr = step_data_list.begin();
-
-    // skip walk start entry if already walking (-> stitching mode)
-    if (PreviewControlWalking::GetInstance()->IsRunning())
-      step_data_itr++;
-
-    for (; step_data_itr != step_data_list.end(); step_data_itr++)
+    for (std::vector<StepData>::iterator step_data_itr = step_data_list.begin(); step_data_itr != step_data_list.end(); step_data_itr++)
     {
       StepData step_data = *step_data_itr;
 
