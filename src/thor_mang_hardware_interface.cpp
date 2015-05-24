@@ -109,7 +109,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
 
   uID = const_cast<char*>("thor_mang_hardware_interface");
 
-  ros::NodeHandle nh("thor_mang/joint_calibration");
+  ros::NodeHandle nh("joint_offset_calibration");
   dyn_rec_server_.reset(new HardwareInterfaceConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecParamCallback, this, _1, _2));
 
