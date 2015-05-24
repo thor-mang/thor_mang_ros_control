@@ -136,6 +136,7 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& /*time*/)
   steps.clear();
 
   initWalkingParameters();
+  StartWalking();
 
   ROS_INFO("[PreviewWalking] Footstep controller init done.");
 }
@@ -161,7 +162,7 @@ bool ThorMangFootstepPreviewController::initImuData()
     imu_bias[0] += MotionStatus::EulerAngleX; // Roll
     imu_bias[1] += MotionStatus::EulerAngleY; // Pitch
 
-    if (current_imu_measurements++ >= max_imu_measurements)
+    if (++current_imu_measurements >= max_imu_measurements)
     {
       for (unsigned int i = 0; i < 2; i++)
         imu_bias[i] = imu_bias[i]/static_cast<double>(max_imu_measurements);
@@ -193,7 +194,7 @@ bool ThorMangFootstepPreviewController::initFtDataOnGround()
     ft_bias_on_ground[10] += MotionStatus::L_LEG_TY;
     ft_bias_on_ground[11] += MotionStatus::L_LEG_TZ;
 
-    if (current_ft_measurements++ >= max_ft_measurements)
+    if (++current_ft_measurements >= max_ft_measurements)
     {
       std::stringstream ss;
       for (unsigned int i = 0; i < 12; i++)
