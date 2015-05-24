@@ -319,7 +319,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
       continue;
 
-    m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
+    m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index] - calibration_joint_offsets[id_index]) + ros_joint_offsets[id_index];
   }
 }
 
