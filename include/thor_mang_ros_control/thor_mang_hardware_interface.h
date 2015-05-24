@@ -162,6 +162,7 @@ protected:
 
   void setJointPosition(unsigned int joint_index, int value);
   void setJointVelocity(unsigned int joint_index, int value);
+  void setVelocityGain(unsigned int joint_index, int value);
   void setJointAcceleration(unsigned int joint_index, int value);
   void initINS();
   void InitForceTorque();

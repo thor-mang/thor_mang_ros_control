@@ -437,16 +437,10 @@ bool ThorMangHardwareInterface::goReadyPose()
 
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-      continue;
-
     int id = m_RobotInfo[joint_index].m_ID;
 
-    int error = 0;
     if (id >= 15 && id <= 26)
-      m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteWord(id, PRO54::P_VELOCITY_I_GAIN_L, 0, &error);
-
-    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
+      setVelocityGain(joint_index, 0);
 
     usleep(1000);
   }
@@ -579,6 +573,10 @@ void ThorMangHardwareInterface::setJointVelocity(unsigned int joint_index, int v
 void ThorMangHardwareInterface::setJointAcceleration(unsigned int joint_index, int value)
 {
   MotionManager::GetInstance()->WriteGoalAcceleration(MotionStatus::m_CurrentJoints[joint_index], value);
+}
+
+void ThorMangHardwareInterface::setVelocityGain(unsigned int joint_index, int value) {
+  MotionManager::GetInstance()->WriteVelocityGain(MotionStatus::m_CurrentJoints[joint_index], value);
 }
 
 void ThorMangHardwareInterface::initINS()
