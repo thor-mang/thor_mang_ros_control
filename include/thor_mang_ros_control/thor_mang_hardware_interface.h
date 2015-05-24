@@ -56,6 +56,10 @@
 #include <robot_transforms/robot_transforms.h>
 #include <biped_state_estimator/biped_state_estimator.h>
 
+// Dyn reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <thor_mang_ros_control/HardwareInterfaceConfig.h>
+
 #define G_ACC 9.80665
 
 
@@ -178,6 +182,7 @@ protected:
    * ROS zero: "fully extended arms/legs"
    **/
   static const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
+  double calibration_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
 
   // parameters
   double joint_state_intervall;
@@ -226,6 +231,13 @@ protected:
 
 	// State estimation
 	robot_tools::StateEstimator state_estimator;
+
+    //dyn_reconfigure_callback
+    void dynRecParamCallback(thor_mang_ros_control::HardwareInterfaceConfig &config, uint32_t level);
+
+    typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
+    boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
+
 };
 }
 
