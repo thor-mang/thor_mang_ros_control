@@ -773,33 +773,33 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
 void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::HardwareInterfaceConfig &config, uint32_t level)
 {
             calibration_joint_offsets[0] = config.r_shoulder_pitch;
-            calibration_joint_offsets[1] = config.r_shoulder_roll;
-            calibration_joint_offsets[2] = config.r_shoulder_yaw;
-            calibration_joint_offsets[3] = config.r_elbow;
-            calibration_joint_offsets[4] = config.r_wrist_yaw1;
-            calibration_joint_offsets[5] = config.r_wrist_roll;
-            calibration_joint_offsets[6] = config.r_wrist_yaw2;
+            calibration_joint_offsets[2] = config.r_shoulder_roll;
+            calibration_joint_offsets[4] = config.r_shoulder_yaw;
+            calibration_joint_offsets[6] = config.r_elbow;
+            calibration_joint_offsets[8] = config.r_wrist_yaw1;
+            calibration_joint_offsets[10] = config.r_wrist_roll;
+            calibration_joint_offsets[12] = config.r_wrist_yaw2;
 
-            calibration_joint_offsets[7] = config.l_shoulder_pitch;
-            calibration_joint_offsets[8] = config.l_shoulder_roll;
-            calibration_joint_offsets[9] = config.l_shoulder_yaw;
-            calibration_joint_offsets[10] = config.l_elbow;
-            calibration_joint_offsets[11] = config.l_wrist_yaw1;
-            calibration_joint_offsets[12] = config.l_wrist_roll;
+            calibration_joint_offsets[1] = config.l_shoulder_pitch;
+            calibration_joint_offsets[3] = config.l_shoulder_roll;
+            calibration_joint_offsets[5] = config.l_shoulder_yaw;
+            calibration_joint_offsets[7] = config.l_elbow;
+            calibration_joint_offsets[9] = config.l_wrist_yaw1;
+            calibration_joint_offsets[11] = config.l_wrist_roll;
             calibration_joint_offsets[13] = config.r_wrist_yaw2;
 
             calibration_joint_offsets[14] = config.r_hip_yaw;
-            calibration_joint_offsets[15] = config.r_hip_roll;
-            calibration_joint_offsets[16] = config.r_hip_pitch;
-            calibration_joint_offsets[17] = config.r_knee;
-            calibration_joint_offsets[18] = config.r_ankle_pitch;
-            calibration_joint_offsets[19] = config.r_ankle_roll;
+            calibration_joint_offsets[16] = config.r_hip_roll;
+            calibration_joint_offsets[18] = config.r_hip_pitch;
+            calibration_joint_offsets[20] = config.r_knee;
+            calibration_joint_offsets[22] = config.r_ankle_pitch;
+            calibration_joint_offsets[24] = config.r_ankle_roll;
 
-            calibration_joint_offsets[20] = config.l_hip_yaw;
-            calibration_joint_offsets[21] = config.l_hip_roll;
-            calibration_joint_offsets[22] = config.l_hip_pitch;
-            calibration_joint_offsets[23] = config.l_knee;
-            calibration_joint_offsets[24] = config.l_ankle_pitch;
+            calibration_joint_offsets[15] = config.l_hip_yaw;
+            calibration_joint_offsets[17] = config.l_hip_roll;
+            calibration_joint_offsets[19] = config.l_hip_pitch;
+            calibration_joint_offsets[21] = config.l_knee;
+            calibration_joint_offsets[23] = config.l_ankle_pitch;
             calibration_joint_offsets[25] = config.l_ankle_roll;
 
             calibration_joint_offsets[26] = config.waist_pan;
@@ -809,11 +809,11 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
             calibration_joint_offsets[29] = config.head_tilt;
 
             calibration_joint_offsets[30] = config.r_hand_thumb;
-            calibration_joint_offsets[31] = config.r_hand_index_finger;
-            calibration_joint_offsets[32] = config.r_hand_middle_finger;
+            calibration_joint_offsets[32] = config.r_hand_index_finger;
+            calibration_joint_offsets[34] = config.r_hand_middle_finger;
 
-            calibration_joint_offsets[33] = config.l_hand_thumb;
-            calibration_joint_offsets[34] = config.l_hand_index_finger;
+            calibration_joint_offsets[31] = config.l_hand_thumb;
+            calibration_joint_offsets[33] = config.l_hand_index_finger;
             calibration_joint_offsets[35] = config.l_hand_middle_finger;
 
             calibration_joint_offsets[36] = config.waist_lidar;
