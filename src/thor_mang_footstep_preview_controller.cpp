@@ -136,6 +136,18 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& /*time*/)
   steps.clear();
 
   initWalkingParameters();
+  // init servo goals
+  for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
+  {
+    int id = MotionStatus::m_CurrentJoints[index].m_ID;
+
+    int err;
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
+    if (err) ROS_ERROR_STREAM("[PreviewWalking] Failed setting goal acceleration for id: " << id);
+    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
+    if (err) ROS_ERROR_STREAM("[PreviewWalking] Failed setting goal velocity for id: " << id);
+  }
+
   StartWalking();
 
   ROS_INFO("[PreviewWalking] Footstep controller init done.");
@@ -281,16 +293,6 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->D_GAIN = 0;
 
   //PreviewControlWalking::GetInstance()->SetRefZMPDecisionParameter(0.0, 0.0, 0.0);
-
-  // init servo gains
-  for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
-  {
-    int id = MotionStatus::m_CurrentJoints[index].m_ID;
-
-    int err;
-    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
-    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
-  }
 }
 
 void ThorMangFootstepPreviewController::claimJoints()
@@ -389,7 +391,6 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     return;
   }
 
-  // Nothing to do here since robotis has its own process function
   if (PreviewControlWalking::GetInstance()->IsRunning())
   {
     if (PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData() != remaining_steps)
