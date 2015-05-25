@@ -189,7 +189,48 @@ void ThorMangFallingController::fallPose(){
 }
 
 void ThorMangFallingController::fallPoseFront(){
-    fallPoseRear();
+    //ARMS
+
+    setJoint(1, 1.78); //r_shoulder_pitch
+    setJoint(2, -1.78); //l_shoulder_pitch
+
+    setJoint(3, 0.33); //r_shoulder_roll
+    setJoint(4, -0.33); //l_shoulder_roll
+
+    setJoint(5, 0.53); //r_shoulder_yaw
+    setJoint(6, -0.53); //l_shoulder_yaw
+
+    setJoint(7, 2.03); //r_elbow
+    setJoint(8, -2.03); //l_elbow
+
+    setJoint(9, 0.71); //r_wrist_yaw_1
+    setJoint(10, -0.71); //l_wrist_yaw_1
+
+    setJoint(11, 0.97); //r_wrist_roll
+    setJoint(12, -0.97); //l_wrist_roll
+
+    setJoint(13, -0.90); //r_wrist_yaw_2
+    setJoint(14, 0.90); //l_wrist_yaw_2
+
+    //LEGS
+
+    setJoint(15, -0.01); //r_hip_yaw
+    setJoint(16, 0.01); //l_hip_yaw
+
+    setJoint(17, 0.09); //r_hip_roll
+    setJoint(18, -0.09); //l_hip_roll
+
+    setJoint(19, 1.57); //r_hip_pitch
+    setJoint(20, -1.57); //l_hip_pitch
+
+    setJoint(21, -2.49); //r_knee
+    setJoint(22, 2.49); //l_knee
+
+    setJoint(23, -0.91);  //r_ankle_pitch
+    setJoint(24, 0.91); //l_ankle_pitch
+
+    setJoint(25, -0.09);  //r_ankle_roll
+    setJoint(26, 0.09); //l_ankle_roll
 }
 
 void ThorMangFallingController::fallPoseRear(){
@@ -348,8 +389,8 @@ void ThorMangFallingController::limitSpeed(){
         int id = m_RobotInfo[joint_index].m_ID;
 
         int error = 0;
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 15, &error); //0 -> unlimited
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 8000, &error); //0 -> unlimited
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error); //0 -> unlimited
+        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 2000, &error); //0 -> unlimited
         ROS_INFO("Setting speed limit for %d", joint_index);
         ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
     }
