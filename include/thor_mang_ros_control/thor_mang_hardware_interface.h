@@ -56,6 +56,10 @@
 #include <robot_transforms/robot_transforms.h>
 #include <biped_state_estimator/biped_state_estimator.h>
 
+// Dyn reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <thor_mang_ros_control/HardwareInterfaceConfig.h>
+
 #define G_ACC 9.80665
 
 
@@ -158,10 +162,12 @@ protected:
   JointData* getJoint(int id);
 
   // Robot bringup
+  bool robotBringUp();
   bool goReadyPose();
 
   void setJointPosition(unsigned int joint_index, int value);
   void setJointVelocity(unsigned int joint_index, int value);
+  void setVelocityGain(unsigned int joint_index, int value);
   void setJointAcceleration(unsigned int joint_index, int value);
   void initINS();
   void InitForceTorque();
@@ -178,6 +184,7 @@ protected:
    * ROS zero: "fully extended arms/legs"
    **/
   static const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
+  double calibration_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
 
   // parameters
   double joint_state_intervall;
@@ -222,10 +229,16 @@ protected:
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   // Robot Transforms
-	boost::shared_ptr<robot_tools::RobotTransforms> robot_transforms_ptr;
+  boost::shared_ptr<robot_tools::RobotTransforms> robot_transforms_ptr;
 
-	// State estimation
-	robot_tools::StateEstimator state_estimator;
+  // State estimation
+  robot_tools::StateEstimator state_estimator;
+
+  //dyn_reconfigure_callback
+  void dynRecParamCallback(thor_mang_ros_control::HardwareInterfaceConfig &config, uint32_t level);
+
+  typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
+  boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
 };
 }
 

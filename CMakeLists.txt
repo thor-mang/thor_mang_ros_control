@@ -28,6 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 generate_dynamic_reconfigure_options(
   cfg/FootstepPreviewController.cfg
+  cfg/HardwareInterface.cfg
 )
 # THOR-OP interface library
 include_directories(../thor_mang_libs/include)

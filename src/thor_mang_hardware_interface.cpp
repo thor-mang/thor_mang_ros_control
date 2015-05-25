@@ -101,13 +101,18 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(true)
 {
-  for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++) {
+  uID = const_cast<char*>("thor_mang_hardware_interface");
+
+  for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
+  {
     has_ft_offsets[i] = true;
     num_ft_measurements[i] = 0;
     force_torque_offset[i] = FTCompensation::Vector6d::Zero();
   }
 
-  uID = const_cast<char*>("thor_mang_hardware_interface");
+  ros::NodeHandle nh("joint_offset_calibration");
+  dyn_rec_server_.reset(new HardwareInterfaceConfigServer(nh));
+  dyn_rec_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecParamCallback, this, _1, _2));
 }
 
 ThorMangHardwareInterface::ThorMangHardwareInterface(ThorMangHardwareInterface const&)
@@ -232,7 +237,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   for (unsigned int joint_index = 0; joint_index < MotionStatus::m_CurrentJointsStatus.size(); joint_index++)
   {
     int id_index = MotionStatus::m_CurrentJointsStatus[joint_index].m_ID-1;
-    pos[id_index] = MotionStatus::m_CurrentJointsStatus[joint_index].m_DXLInfo->Value2Rad(MotionStatus::m_CurrentJointsStatus[joint_index].m_Value - ros_joint_offsets[id_index]);
+    pos[id_index] = MotionStatus::m_CurrentJointsStatus[joint_index].m_DXLInfo->Value2Rad(MotionStatus::m_CurrentJointsStatus[joint_index].m_Value - ros_joint_offsets[id_index]) + calibration_joint_offsets[id_index];
   }
 
   // Update Robot state
@@ -314,7 +319,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
       continue;
 
-    m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index]) + ros_joint_offsets[id_index];
+    m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index] - calibration_joint_offsets[id_index]) + ros_joint_offsets[id_index];
   }
 }
 
@@ -437,16 +442,10 @@ bool ThorMangHardwareInterface::goReadyPose()
 
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-      continue;
-
     int id = m_RobotInfo[joint_index].m_ID;
 
-    int error = 0;
     if (id >= 15 && id <= 26)
-      m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteWord(id, PRO54::P_VELOCITY_I_GAIN_L, 0, &error);
-
-    ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
+      setVelocityGain(joint_index, 0);
 
     usleep(1000);
   }
@@ -581,6 +580,11 @@ void ThorMangHardwareInterface::setJointAcceleration(unsigned int joint_index, i
   MotionManager::GetInstance()->WriteGoalAcceleration(MotionStatus::m_CurrentJoints[joint_index], value);
 }
 
+void ThorMangHardwareInterface::setVelocityGain(unsigned int joint_index, int value)
+{
+  MotionManager::GetInstance()->WriteVelocityGain(MotionStatus::m_CurrentJoints[joint_index], value);
+}
+
 void ThorMangHardwareInterface::initINS()
 {
   imu_orientation[0] = imu_orientation[1] = imu_orientation[2] = 0.0;
@@ -626,7 +630,8 @@ void ThorMangHardwareInterface::InitForceTorque()
   }
 }
 
-void ThorMangHardwareInterface::startCalibration() {
+void ThorMangHardwareInterface::startCalibration()
+{
   if (!goReadyPose())
   {
     ROS_ERROR("Calibration failed! Couldn't move to ready pose.");
@@ -763,5 +768,54 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
       ROS_INFO_THROTTLE(1, "Robot setup finished! You can place the robot on ground now.");
     }
   }
+}
+
+void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::HardwareInterfaceConfig &config, uint32_t /*level*/)
+{
+  calibration_joint_offsets[0] = config.r_shoulder_pitch;
+  calibration_joint_offsets[2] = config.r_shoulder_roll;
+  calibration_joint_offsets[4] = config.r_shoulder_yaw;
+  calibration_joint_offsets[6] = config.r_elbow;
+  calibration_joint_offsets[8] = config.r_wrist_yaw1;
+  calibration_joint_offsets[10] = config.r_wrist_roll;
+  calibration_joint_offsets[12] = config.r_wrist_yaw2;
+
+  calibration_joint_offsets[1] = config.l_shoulder_pitch;
+  calibration_joint_offsets[3] = config.l_shoulder_roll;
+  calibration_joint_offsets[5] = config.l_shoulder_yaw;
+  calibration_joint_offsets[7] = config.l_elbow;
+  calibration_joint_offsets[9] = config.l_wrist_yaw1;
+  calibration_joint_offsets[11] = config.l_wrist_roll;
+  calibration_joint_offsets[13] = config.r_wrist_yaw2;
+
+  calibration_joint_offsets[14] = config.r_hip_yaw;
+  calibration_joint_offsets[16] = config.r_hip_roll;
+  calibration_joint_offsets[18] = config.r_hip_pitch;
+  calibration_joint_offsets[20] = config.r_knee;
+  calibration_joint_offsets[22] = config.r_ankle_pitch;
+  calibration_joint_offsets[24] = config.r_ankle_roll;
+
+  calibration_joint_offsets[15] = config.l_hip_yaw;
+  calibration_joint_offsets[17] = config.l_hip_roll;
+  calibration_joint_offsets[19] = config.l_hip_pitch;
+  calibration_joint_offsets[21] = config.l_knee;
+  calibration_joint_offsets[23] = config.l_ankle_pitch;
+  calibration_joint_offsets[25] = config.l_ankle_roll;
+
+  calibration_joint_offsets[26] = config.waist_pan;
+  calibration_joint_offsets[27] = config.waist_tilt;
+
+  calibration_joint_offsets[28] = config.head_pan;
+  calibration_joint_offsets[29] = config.head_tilt;
+
+  calibration_joint_offsets[30] = config.r_hand_thumb;
+  calibration_joint_offsets[32] = config.r_hand_index_finger;
+  calibration_joint_offsets[34] = config.r_hand_middle_finger;
+
+  calibration_joint_offsets[31] = config.l_hand_thumb;
+  calibration_joint_offsets[33] = config.l_hand_index_finger;
+  calibration_joint_offsets[35] = config.l_hand_middle_finger;
+
+  calibration_joint_offsets[36] = config.waist_lidar;
 }
 }
