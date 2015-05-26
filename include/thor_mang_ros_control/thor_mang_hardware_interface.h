@@ -162,7 +162,6 @@ protected:
   JointData* getJoint(int id);
 
   // Robot bringup
-  bool robotBringUp();
   bool goReadyPose();
 
   void setJointPosition(unsigned int joint_index, int value);
