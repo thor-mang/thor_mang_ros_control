@@ -40,5 +40,7 @@
       <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_controller_config.yaml" command="load"/>
       <param name="thor_mang_ini_file" value="$(find thor_mang_ros_control)/config/thor_mang_config.ini" />
     </node>
+
+    <remap from="joint_states" to="joint_states_raw" />
   </group>
 </launch>
