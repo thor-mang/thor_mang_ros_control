@@ -402,8 +402,8 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
 
       vigir_footstep_planning::msgs::ExecuteStepPlanFeedback feedback;
       feedback.currently_executing_step_index = total_steps_added - remaining_steps + 1;
-      feedback.first_changeable_step_index = feedback.currently_executing_step_index +1;
-      feedback.last_performed_step_index = feedback.currently_executing_step_index -1;
+      feedback.first_changeable_step_index = feedback.currently_executing_step_index + 2;
+      feedback.last_performed_step_index = feedback.currently_executing_step_index - 1;
       execute_step_plan_as->publishFeedback(feedback);
     }
   }
