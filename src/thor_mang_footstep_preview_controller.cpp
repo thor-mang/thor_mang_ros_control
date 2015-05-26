@@ -82,6 +82,21 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
   nh.param("arms", claim_arms, true);
 
+  // Set initial values for walking, in case there is no connection to the parameter server
+  hip_pitch_offset = 10.2;
+  ankle_pitch_offset = -1.08;
+  walk_stabilizer_gain_ratio = 3.0;
+  imu_gyro_gain_ratio = 0.0731;
+  force_moment_distribution_ratio = 0.4;
+  balance_hip_pitch_gain = 1.0;
+  balance_z_gain_by_ft = 0.05;
+  balance_right_roll_gain_by_ft = 0.001;
+  balance_right_pitch_gain_by_ft = -0.0005;
+  balance_left_roll_gain_by_ft = 0.001;
+  balance_left_pitch_gain_by_ft = -0.0005;
+  foot_landing_offset_gain = 1.0;
+  foot_landing_detect_n = 50.0;
+
   dyn_rec_server_.reset(new FootstepPreviewConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
 
@@ -101,22 +116,6 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
       }
     }
   }
-
-  // Init walking
-  nh.param("hip_pitch_offset", hip_pitch_offset, 10.2);
-  nh.param("ankle_pitch_offset", ankle_pitch_offset, -1.08);
-  nh.param("walk_stabilizer_gain_ratio", walk_stabilizer_gain_ratio, 3.0);
-  nh.param("imu_gyro_gain_ratio", imu_gyro_gain_ratio, 0.0731);
-  nh.param("force_moment_distribution_ratio", force_moment_distribution_ratio, 0.4);
-  nh.param("balance_hip_pitch_gain", balance_hip_pitch_gain, 1.0);
-  nh.param("balance_z_gain_by_ft", balance_z_gain_by_ft, 0.05);
-  nh.param("balance_right_roll_gain_by_ft", balance_right_roll_gain_by_ft, 0.001);
-  nh.param("balance_right_pitch_gain_by_ft", balance_right_pitch_gain_by_ft, -0.0005);
-  nh.param("balance_left_roll_gain_by_ft", balance_left_roll_gain_by_ft, 0.001);
-  nh.param("balance_left_pitch_gain_by_ft", balance_left_pitch_gain_by_ft, -0.0005);
-  nh.param("foot_landing_offset_gain", foot_landing_offset_gain, 1.0);
-  nh.param("foot_landing_detect_n", foot_landing_detect_n, 50.0);
-
   initWalkingParameters();
   PreviewControlWalking::GetInstance()->SetInitialPose(0.0, -125.0,   0.0, 0.0, 0.0, 0.0,
                                                        0.0,  125.0,   0.0, 0.0, 0.0, 0.0,

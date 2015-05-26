@@ -5,19 +5,6 @@
     type: Thor/ThorMangFootstepPreviewController
     execute_step_plan_topic: 'execute_step_plan'
     arms: true
-    hip_pitch_offset: 10.2
-    ankle_pitch_offset: -1.08
-    walk_stabilizer_gain_ratio: 3.0
-    imu_gyro_gain_ratio: 0.0731
-    force_moment_distribution_ratio: 0.4
-    balance_hip_pitch_gain: 1.0
-    balance_z_gain_by_ft: 0.05
-    balance_right_roll_gain_by_ft: 0.001
-    balance_right_pitch_gain_by_ft: -0.0005
-    balance_left_roll_gain_by_ft: 0.001
-    balance_left_pitch_gain_by_ft: -0.0005
-    foot_landing_offset_gain: 0.0
-    foot_landing_detect_n: 50.0
 
   step_manipulate_controller:
     type: Thor/ThorMangFootstepPreviewController
