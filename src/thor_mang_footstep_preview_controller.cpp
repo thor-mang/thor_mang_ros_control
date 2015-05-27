@@ -132,8 +132,6 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& /*time*/)
 
   ROS_INFO("[PreviewWalking] Controller '%s' is starting.", uID);
 
-  steps.clear();
-
   initWalkingParameters();
   // init servo goals
   for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
@@ -157,6 +155,7 @@ void ThorMangFootstepPreviewController::stopping(const ros::Time& /*time*/)
   ROS_INFO("[PreviewWalking] Controller '%s' stopping.", uID);
   PreviewControlWalking::GetInstance()->Stop();
   steps.clear();
+  total_steps_added = 0;
   unclaimJoints();
 }
 
