@@ -313,7 +313,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
   {
     int id_index = m_RobotInfo[joint_index].m_ID-1;
 
-    if (cmd[id_index] == std::numeric_limits<double>::quiet_NaN())
+    if (cmd[id_index] != cmd[id_index]) //checks that cmd[id_index] is not nan
       continue;
 
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
