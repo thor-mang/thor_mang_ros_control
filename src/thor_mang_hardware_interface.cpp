@@ -143,7 +143,13 @@ void ThorMangHardwareInterface::Initialize()
 {
   if (MotionStatus::m_CurrentJoints.size() != 0)
   {
-    m_RobotInfo = MotionStatus::m_CurrentJoints;
+        m_RobotInfo = MotionStatus::m_CurrentJoints;
+        for (unsigned int joint_index = 0; joint_index < MotionStatus::m_CurrentJoints.size(); joint_index++)
+        {
+                int id_index = m_RobotInfo[joint_index].m_ID-1;
+                m_RobotInfo[joint_index].m_Value -= MotionManager::GetInstance()->m_Offset[id_index];
+
+        }
     ROS_INFO("Initialize INS...");
     initINS();
     ROS_INFO("Initialize FT-Sensors...");
