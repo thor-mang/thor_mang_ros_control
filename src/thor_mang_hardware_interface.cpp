@@ -453,6 +453,22 @@ bool ThorMangHardwareInterface::goReadyPose()
   // let's move now
   ROS_WARN("Moving to ready pose now!");
 
+  // Close hands
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    int id = m_RobotInfo[joint_index].m_ID;
+
+    if (id == 31)
+      setJointPosition(joint_index, 3280);
+    else if (id == 32)
+      setJointPosition(joint_index, 3500);
+    else if (id == 33)
+      setJointPosition(joint_index, 3600);
+    else if (id == 34)
+      setJointPosition(joint_index, 3850);
+  }
+  usleep(1000000); // 1 second
+
   // Move arms outwards to prevent self-collisions
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
