@@ -465,13 +465,13 @@ bool ThorMangHardwareInterface::goReadyPose()
     int id = m_RobotInfo[joint_index].m_ID;
 
     if (id == 31)
-      setJointPosition(joint_index, 3784);
+      setJointPosition(joint_index, 3280 - MotionManager::GetInstance()->m_Offset[id-1]);
     else if (id == 32)
-      setJointPosition(joint_index, 4171);
+      setJointPosition(joint_index, 3500 - MotionManager::GetInstance()->m_Offset[id-1]);
     else if (id == 33)
-      setJointPosition(joint_index, 4034);
+      setJointPosition(joint_index, 3600 - MotionManager::GetInstance()->m_Offset[id-1]);
     else if (id == 34)
-      setJointPosition(joint_index, 5321);
+      setJointPosition(joint_index, 3850 - MotionManager::GetInstance()->m_Offset[id-1]);
   }
   usleep(1000000); // 1 second
 
