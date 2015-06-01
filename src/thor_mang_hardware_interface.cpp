@@ -143,7 +143,13 @@ void ThorMangHardwareInterface::Initialize()
 {
   if (MotionStatus::m_CurrentJoints.size() != 0)
   {
-    m_RobotInfo = MotionStatus::m_CurrentJoints;
+        m_RobotInfo = MotionStatus::m_CurrentJoints;
+        for (unsigned int joint_index = 0; joint_index < MotionStatus::m_CurrentJoints.size(); joint_index++)
+        {
+                int id_index = m_RobotInfo[joint_index].m_ID-1;
+                m_RobotInfo[joint_index].m_Value -= MotionManager::GetInstance()->m_Offset[id_index];
+
+        }
     ROS_INFO("Initialize INS...");
     initINS();
     ROS_INFO("Initialize FT-Sensors...");
@@ -313,7 +319,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
   {
     int id_index = m_RobotInfo[joint_index].m_ID-1;
 
-    if (cmd[id_index] == std::numeric_limits<double>::quiet_NaN())
+    if (cmd[id_index] != cmd[id_index]) //checks that cmd[id_index] is not nan
       continue;
 
     if (m_RobotInfo[joint_index].m_ID < 1 || m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)

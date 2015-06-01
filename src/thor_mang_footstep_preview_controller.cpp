@@ -83,8 +83,8 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   nh.param("arms", claim_arms, true);
 
   // Set initial values for walking, in case there is no connection to the parameter server
-  hip_pitch_offset = 10.2;
-  ankle_pitch_offset = -1.08;
+  hip_pitch_offset = 12.0;
+  ankle_pitch_offset = 0;
   walk_stabilizer_gain_ratio = 3.0;
   imu_gyro_gain_ratio = 0.0731;
   force_moment_distribution_ratio = 0.4;
@@ -132,19 +132,29 @@ void ThorMangFootstepPreviewController::starting(const ros::Time& /*time*/)
 
   ROS_INFO("[PreviewWalking] Controller '%s' is starting.", uID);
 
-  steps.clear();
-
   initWalkingParameters();
   // init servo goals
   for(unsigned int index = 0; index < MotionStatus::m_CurrentJoints.size(); index++)
   {
     int id = MotionStatus::m_CurrentJoints[index].m_ID;
 
-    int err;
-    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
-    if (err) ROS_ERROR_STREAM("[PreviewWalking] Failed setting goal acceleration for id: " << id);
-    MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
-    if (err) ROS_ERROR_STREAM("[PreviewWalking] Failed setting goal velocity for id: " << id);
+    if (MotionStatus::m_CurrentJoints[index].m_DXLInfo->MODEL_NUM == 42)
+    {
+      int err;
+      MotionManager::GetInstance()->WriteDWord(id, PRO42::P_GOAL_ACCELATION_LL, 0, &err);
+      ROS_ERROR_STREAM_COND(err, "[PreviewWalking] Failed setting goal acceleration for id: " << id);
+      MotionManager::GetInstance()->WriteDWord(id, PRO42::P_GOAL_VELOCITY_LL, 0, &err);
+      ROS_ERROR_STREAM_COND(err, "[PreviewWalking] Failed setting goal velocity for id: " << id);
+    }
+
+    if (MotionStatus::m_CurrentJoints[index].m_DXLInfo->MODEL_NUM == 54)
+    {
+      int err;
+      MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 0, &err);
+      ROS_ERROR_STREAM_COND(err, "[PreviewWalking] Failed setting goal acceleration for id: " << id);
+      MotionManager::GetInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 0, &err);
+      ROS_ERROR_STREAM_COND(err, "[PreviewWalking] Failed setting goal velocity for id: " << id);
+    }
   }
 
   StartWalking();
@@ -157,6 +167,7 @@ void ThorMangFootstepPreviewController::stopping(const ros::Time& /*time*/)
   ROS_INFO("[PreviewWalking] Controller '%s' stopping.", uID);
   PreviewControlWalking::GetInstance()->Stop();
   steps.clear();
+  total_steps_added = 0;
   unclaimJoints();
 }
 
