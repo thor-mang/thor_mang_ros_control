@@ -145,28 +145,28 @@ void ThorMangHardwareInterface::Initialize()
 {
   if (MotionStatus::m_CurrentJoints.size() != 0)
   {
-        m_RobotInfo = MotionStatus::m_CurrentJoints;
-        for (unsigned int joint_index = 0; joint_index < MotionStatus::m_CurrentJoints.size(); joint_index++)
-        {
-                int id_index = m_RobotInfo[joint_index].m_ID-1;
-                m_RobotInfo[joint_index].m_Value -= MotionManager::GetInstance()->m_Offset[id_index];
+    m_RobotInfo = MotionStatus::m_CurrentJoints;
+    for (unsigned int joint_index = 0; joint_index < MotionStatus::m_CurrentJoints.size(); joint_index++)
+    {
+      int id_index = m_RobotInfo[joint_index].m_ID-1;
+      m_RobotInfo[joint_index].m_Value -= MotionManager::GetInstance()->m_Offset[id_index];
 
-        }
-    ROS_INFO("Initialize INS...");
-    initINS();
-    ROS_INFO("Initialize FT-Sensors...");
-    InitForceTorque();
+    }
   }
   else
   {
     ROS_ERROR("MotionStatus is not initialized");
   }
+  ROS_INFO("Initialize INS...");
+  initINS();
+  ROS_INFO("Initialize FT-Sensors...");
+  InitForceTorque();
 
   /** register joints */
 
   std::set<unsigned int> found_ids;
   std::set<unsigned int> all_ids;
-  for (unsigned int i = 1; i < MotionStatus::MAXIMUM_NUMBER_OF_JOINTS+1; i++) {
+  for (unsigned int i = 1; i < MotionStatus::MAXIMUM_NUMBER_OF_JOINTS; i++) {
     all_ids.insert(i);
     pos[i-1] = 0;
   }
@@ -746,27 +746,27 @@ void ThorMangHardwareInterface::update_force_torque_sensors()
 
       // get offsets
       MotionManager::GetInstance()->RightLegFTSensor.getForceTorqueBias(&right_foot_offset[0], &right_foot_offset[1], &right_foot_offset[2],
-                                                                        &right_foot_offset[3], &right_foot_offset[4], &right_foot_offset[5]);
+          &right_foot_offset[3], &right_foot_offset[4], &right_foot_offset[5]);
 
       MotionManager::GetInstance()->LeftLegFTSensor.getForceTorqueBias(&left_foot_offset[0], &left_foot_offset[1], &left_foot_offset[2],
-                                                                       &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
+          &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
 
       ROS_INFO_STREAM("Initial values right foot: " << right_foot_offset[0] << " " << right_foot_offset[1] << " " << right_foot_offset[2] << " "
-                                                    << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5]);
+                                                                            << right_foot_offset[3] << " " << right_foot_offset[4] << " " << right_foot_offset[5]);
 
       ROS_INFO_STREAM("Initial values left foot: " << left_foot_offset[0] << " " << left_foot_offset[1] << " " << left_foot_offset[2] << " "
-                                                   << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5]);
+                                                                          << left_foot_offset[3] << " " << left_foot_offset[4] << " " << left_foot_offset[5]);
 
       // set offsets at walking controllers
       RecursiveWalking::GetInstance()->SetInitForceTorque(right_foot_offset[0], right_foot_offset[1], right_foot_offset[2] ,
-                                                          right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
-                                                          left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
-                                                          left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
+          right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
+          left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
+          left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
 
       PreviewControlWalking::GetInstance()->SetInitForceTorque(right_foot_offset[0], right_foot_offset[1], right_foot_offset[2] ,
-                                                               right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
-                                                               left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
-                                                               left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
+          right_foot_offset[3], right_foot_offset[4], right_foot_offset[5],
+          left_foot_offset[0], left_foot_offset[1], left_foot_offset[2],
+          left_foot_offset[3], left_foot_offset[4], left_foot_offset[5]);
 
       has_foot_ft_offsets_in_air = true;
       // Now reset the ft sensors for ros
@@ -814,7 +814,7 @@ void ThorMangHardwareInterface::compensate_force_torque(unsigned int ft_sensor_i
                       force_torque_offset[ft_sensor_index](0) << ", " << force_torque_offset[ft_sensor_index](1) << ", " <<
                       force_torque_offset[ft_sensor_index](2) << ", " << force_torque_offset[ft_sensor_index](3) << ", " <<
                       force_torque_offset[ft_sensor_index](4) << ", " << force_torque_offset[ft_sensor_index](5));
-      ROS_INFO_THROTTLE(1, "Robot setup finished! You can place the robot on ground now.");
+          ROS_INFO_THROTTLE(1, "Robot setup finished! You can place the robot on ground now.");
     }
   }
 }
