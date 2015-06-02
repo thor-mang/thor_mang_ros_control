@@ -614,7 +614,8 @@ bool ThorMangHardwareInterface::goReadyPose()
 void ThorMangHardwareInterface::setJointPosition(unsigned int joint_index, int value)
 {
   int id = m_RobotInfo[joint_index].m_ID;
-  MotionStatus::m_CurrentJoints[joint_index].m_Value = m_RobotInfo[joint_index].m_Value = value + MotionManager::GetInstance()->m_Offset[id-1];
+  MotionStatus::m_CurrentJoints[joint_index].m_Value = value + MotionManager::GetInstance()->m_Offset[id-1];
+  m_RobotInfo[joint_index].m_Value = value;
   MotionManager::GetInstance()->WriteGoalPosition(MotionStatus::m_CurrentJoints[joint_index]);
 }
 
