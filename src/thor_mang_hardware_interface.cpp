@@ -1,5 +1,7 @@
 #include <thor_mang_ros_control/thor_mang_hardware_interface.h>
 
+#include <algorithm>
+
 namespace Thor
 {
 const std::string ThorMangHardwareInterface::jointUIDs[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
@@ -162,6 +164,13 @@ void ThorMangHardwareInterface::Initialize()
 
   /** register joints */
 
+  std::set<unsigned int> found_ids;
+  std::set<unsigned int> all_ids;
+  for (unsigned int i = 1; i < MotionStatus::MAXIMUM_NUMBER_OF_JOINTS+1; i++) {
+    all_ids.insert(i);
+    pos[i-1] = 0;
+  }
+
   // dispatching joints
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
@@ -172,6 +181,7 @@ void ThorMangHardwareInterface::Initialize()
     }
 
     unsigned int id_index = m_RobotInfo[joint_index].m_ID-1;
+    found_ids.insert(id_index+1);
 
     // connect and register the joint state interface
     hardware_interface::JointStateHandle joint_state_handle(jointUIDs[id_index], &pos[id_index], &vel[id_index], &eff[id_index]);
@@ -184,6 +194,22 @@ void ThorMangHardwareInterface::Initialize()
     // activate control
     MotionStatus::m_EnableList[id_index].uID = uID;
   }
+  // Register missing joints so controllers don't fail to load
+  std::set<unsigned int> missing_ids;
+  std::set_difference(all_ids.begin(), all_ids.end(), found_ids.begin(), found_ids.end(), std::inserter(missing_ids, missing_ids.begin()));
+  std::stringstream error_stream;
+  for (std::set<unsigned int>::const_iterator it = missing_ids.begin(); it != missing_ids.end(); it++) {
+    unsigned int id_index = *it -1;
+    error_stream << jointUIDs[id_index] << ",";
+    // connect and register the joint state interface
+    hardware_interface::JointStateHandle joint_state_handle(jointUIDs[id_index], &pos[id_index], &vel[id_index], &eff[id_index]);
+    joint_state_interface.registerHandle(joint_state_handle);
+
+    // connect and register the joint position interface
+    hardware_interface::JointHandle joint_handle(joint_state_handle, &cmd[id_index]);
+    pos_joint_interface.registerHandle(joint_handle);
+  }
+  ROS_ERROR_STREAM("Following joints are missing: " << error_stream.str());
 
   registerInterface(&joint_state_interface);
   registerInterface(&pos_joint_interface);
