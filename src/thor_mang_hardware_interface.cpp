@@ -150,15 +150,15 @@ void ThorMangHardwareInterface::Initialize()
                 m_RobotInfo[joint_index].m_Value -= MotionManager::GetInstance()->m_Offset[id_index];
 
         }
-    ROS_INFO("Initialize INS...");
-    initINS();
-    ROS_INFO("Initialize FT-Sensors...");
-    InitForceTorque();
   }
   else
   {
     ROS_ERROR("MotionStatus is not initialized");
   }
+  ROS_INFO("Initialize INS...");
+  initINS();
+  ROS_INFO("Initialize FT-Sensors...");
+  InitForceTorque();
 
   /** register joints */
 
@@ -324,9 +324,8 @@ void ThorMangHardwareInterface::publishJointCmds() {
   joint_cmds.effort.resize(m_RobotInfo.size(), 0);
   joint_cmds.velocity.resize(m_RobotInfo.size(), 0);
   for (unsigned int i = 0; i < m_RobotInfo.size(); i++) {
-    unsigned int id = m_RobotInfo[i].m_ID;
-    joint_cmds.position[id-1] = m_RobotInfo[i].m_Value;
-    joint_cmds.name[id-1] = jointUIDs[id-1];
+    joint_cmds.position[i] = m_RobotInfo[i].m_Value;
+    joint_cmds.name[i] = jointUIDs[m_RobotInfo.m_ID];
   }
   joint_cmds_pub_.publish(joint_cmds);
 }
