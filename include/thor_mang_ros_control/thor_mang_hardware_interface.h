@@ -241,7 +241,6 @@ protected:
   typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
   boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
 
-  //
   ros::Publisher joint_cmds_pub_;
 };
 }
