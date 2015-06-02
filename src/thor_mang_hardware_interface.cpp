@@ -84,10 +84,10 @@ const int ThorMangHardwareInterface::ros_joint_offsets[MotionStatus::MAXIMUM_NUM
   0,        // head_pan
   0,        // head_tilt
   0,        // r_hand_thumb
-  0,        // l_hand_thumb
-  0,        // r_hand_index_finger
-  0,        // l_hand_index_finger
-  0,        // r_hand_middle_finger
+  379,        // l_hand_thumb
+  1096,        // r_hand_index_finger
+  379,        // l_hand_index_finger
+  1096,        // r_hand_middle_finger
   0,        // l_hand_middle_finger
   0         // waist_lidar
 };
