@@ -323,9 +323,10 @@ void ThorMangHardwareInterface::publishJointCmds() {
   joint_cmds.position.resize(m_RobotInfo.size());
   joint_cmds.effort.resize(m_RobotInfo.size(), 0);
   joint_cmds.velocity.resize(m_RobotInfo.size(), 0);
+
   for (unsigned int i = 0; i < m_RobotInfo.size(); i++) {
     joint_cmds.position[i] = m_RobotInfo[i].m_Value;
-    joint_cmds.name[i] = jointUIDs[m_RobotInfo.m_ID];
+    joint_cmds.name[i] = jointUIDs[m_RobotInfo[i].m_ID -1];
   }
   joint_cmds_pub_.publish(joint_cmds);
 }
@@ -347,7 +348,9 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
 
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index] - calibration_joint_offsets[id_index]) + ros_joint_offsets[id_index];
   }
-  publishJointCmds();
+  if (joint_cmds_pub_.getNumSubscribers() != 0) {
+    publishJointCmds();
+  }
 }
 
 void ThorMangHardwareInterface::setJointStateRate(double joint_state_rate)
