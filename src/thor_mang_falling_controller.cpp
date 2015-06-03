@@ -178,6 +178,8 @@ bool ThorMangFallingController::detectAndDecide()
 
     if ((std::max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
         stateTransitionCounter++;
+    else
+        stateTransitionCounter = 0;
 
     // Fall detection.
     //if ((std::max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
@@ -424,6 +426,8 @@ bool ThorMangFallingController::checkTorqueOff()
 
     if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
         stateTransitionCounter++;
+    else
+        stateTransitionCounter = 0;
 
     //if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
     if (stateTransitionCounter > 5)
