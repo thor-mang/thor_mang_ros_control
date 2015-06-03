@@ -27,13 +27,15 @@ typedef actionlib::SimpleActionClient<vigir_humanoid_control_msgs::ChangeControl
 typedef enum {
     Disabled,
     Ready,
-    FallPose,
+    Falling,
     TorqueOff
 }State;
 
 typedef enum {
     PoseFront,
-    PoseRear
+    PoseBack,
+    PoseLeft,
+    PoseRight
 }FallingPose;
 
 class ThorMangFallingController:
@@ -56,32 +58,32 @@ public:
     void Process();
 
 protected:
-    bool checkFalling();
+    bool detectAndDecide();
     void sendInfoToControlModeSwitcher();
-    void goIntoFallPose();
     bool checkTorqueOff();
     void disableTorque();
     void setJoint(unsigned int servo_id, double value);
     void fallPose();
     void fallPoseFront();
-    void fallPoseRear();
-    void limitSpeed(); //Only for test!
+    void fallPoseBack();
+    void fallPoseLeft();
+    void fallPoseRight();
+    void limitSpeed();
     ros::WallTime testing_fall_timer;
 
 private:
     void initJoints();
     void claimJoints();
     void setJointsToPose();
-    double rollThresholdPositive;
-    double rollThresholdNegative;
-    double pitchThresholdPositive;
-    double pitchThresholdNegative;
+
+    double fallDetectionAngleThreshold;
+    double fallRelaxAngleThreshold;
 
     double fallPoseTime;
 
     std::map<unsigned int, unsigned int> servo_id_mapping;
 
-    State falling_state;
+    State fallState;
 
     FallingPose fallingPose;
 
@@ -89,10 +91,6 @@ private:
     boost::shared_ptr<ChangeControlModeActionClient> action_client;
 
     hardware_interface::ImuSensorHandle imu_sensor_handle;
-
-    ros::WallTime fallPoseDoneTime;
-
-    ros::WallTime torqueOffDoneTime;
 
     void modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result);
     void modeSwitchActiveCallback();

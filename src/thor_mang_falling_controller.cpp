@@ -6,7 +6,7 @@
 namespace Thor
 {
 
-const bool test_falling = true; //TODO remove
+const bool debugMode = true; //TODO remove
 
 const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 {
@@ -50,7 +50,7 @@ const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 };
 
 
-ThorMangFallingController::ThorMangFallingController() : falling_state(Disabled)
+ThorMangFallingController::ThorMangFallingController() : fallState(Disabled)
 {
     uID = const_cast<char*>("thor_mang_falling_controller");
 }
@@ -58,11 +58,10 @@ ThorMangFallingController::ThorMangFallingController() : falling_state(Disabled)
 
 bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw, ros::NodeHandle& nh)
 {
-    nh.param("rollThresholdPositive", rollThresholdPositive, 0.245);
-    nh.param("rollThresholdNegative", rollThresholdNegative, -0.325);
-    nh.param("pitchThresholdPositive", pitchThresholdPositive, 0.3);
-    nh.param("pitchThresholdNegative", pitchThresholdNegative, -0.15);
-    nh.param("fallPoseTime", fallPoseTime, 0.500);
+
+    nh.param("fallDetectionAngleThreshold", fallDetectionAngleThreshold, 40.0);
+    nh.param("fallRelaxAngleThreshold", fallRelaxAngleThreshold, 66.0);
+
 
     nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
 
@@ -70,7 +69,7 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
 
     imu_sensor_handle = hw->getHandle("pelvis_imu");
 
-    falling_state = Disabled;
+    fallState = Disabled;
 
     if (MotionStatus::m_CurrentJoints.size() != 0)
     {
@@ -85,43 +84,42 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
     return true;
 }
 
+// Called in every tick, after starting has been called.
 void ThorMangFallingController::update(const ros::Time& time, const ros::Duration& period)
 {
-    switch(falling_state){
-    case Disabled:
-        return;
-    case Ready:
-        if(checkFalling()){
-            goIntoFallPose();
-            falling_state = FallPose;
-            //sendInfoToControlModeSwitcher(); //TODO check this!
-        }
-        break;
-    case FallPose:
-        fallPose();
-        if(checkTorqueOff()){
-            falling_state = TorqueOff;
-            torqueOffDoneTime = ros::WallTime::now() + ros::WallDuration(5.0);
-        }
-        break;
-    case TorqueOff:
-        disableTorque();
-        if( ros::WallTime::now() > testing_fall_timer){
-            falling_state = Disabled;
-        }
-        return;
-    default:
-        ROS_ERROR("Unknown state");
-        break;
+    switch(fallState)
+    {
+        case Ready:
+            if (detectAndDecide())
+            {
+                MotionManager::GetInstance()->EnableLights(true);
+                fallState = Falling;
+            }
+            break;
+        case Falling:
+            fallPose();
+            if (checkTorqueOff())
+            {
+                fallState = TorqueOff;
+            }
+            break;
+        case TorqueOff:
+            disableTorque();
+//            if( ros::WallTime::now() > testing_fall_timer){
+//                fallState = Disabled;
+//            }
+            return;
+        default:
+            ROS_ERROR("Unknown state");
+            break;
     }
-
 }
 
 void ThorMangFallingController::starting(const ros::Time& time)
 {
     MotionManager::GetInstance()->AddModule(this);
 
-    falling_state = Ready;
+    fallState = Ready;
     ROS_INFO("[thor_mang_falling_controller] Starting...");
 
     testing_fall_timer = ros::WallTime::now() + ros::WallDuration(5.0); //TODO remove me. Important
@@ -131,64 +129,86 @@ void ThorMangFallingController::starting(const ros::Time& time)
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
     Thor::MotionManager::GetInstance()->RemoveModule(this);
-    falling_state = Disabled;
+    fallState = Disabled;
     ROS_INFO("ThorMangFallingController::stopping");
 }
 
+
+// Don't use!
 void ThorMangFallingController::Initialize()
 {
 }
 
+// Don't use!
 void ThorMangFallingController::Process()
 {
 }
 
-bool ThorMangFallingController::checkFalling()
+bool ThorMangFallingController::detectAndDecide()
 {
-    //TODO remove
-    if(test_falling){
-    ros::WallTime current = ros::WallTime::now();
-    if( current > testing_fall_timer){
-        return true;
-    }
-    }
-    //TODO remove end
-
-    const double* imu_orientation = imu_sensor_handle.getOrientation();
-
     double roll = 0, pitch = 0, yaw = 0;
-
+    const double* imu_orientation = imu_sensor_handle.getOrientation();
     tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
-
     tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
-    if (roll > rollThresholdPositive || roll < rollThresholdNegative
-            || pitch < pitchThresholdNegative || pitch > pitchThresholdPositive){
-        if (pitch > pitchThresholdPositive)
-            fallingPose = PoseFront;
-        else
-            fallingPose = PoseRear;
+    double fallDirection = atan2(-roll, pitch);
+
+    ROS_INFO("Checking attitude roll: %f pitch: %f direction: %f", roll, pitch, fallDirection);
+
+    // Fall detection.
+    if ((max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
+    {
+
+
+        ROS_INFO("FALL DETECTED! direction: %f", fallDirection);
+
+        fallingPose = PoseFront;
+        if (fabs(fallDirection) < M_PI/4.0)
+            fallingPose = PoseFront; // front
+        else if (fabs(fallDirection) > 3.0*M_PI/4.0)
+            fallingPose = PoseBack; // back
+        else if (fallDirection > 0)
+            fallingPose = PoseLeft;
+        else if (fallDirection < 0)
+            fallingPose = PoseRight;
+
+        ROS_INFO("Fall pose decided. %d", fallingPose);
+
         return true;
     }
+
     return false;
 }
 
-void ThorMangFallingController::fallPose(){
+void ThorMangFallingController::fallPose()
+{
     limitSpeed();
-
     claimJoints();
 
-    fallingPose = PoseRear; //TODO remove
-    if(fallingPose == PoseFront){
+    if(fallingPose == PoseFront)
+    {
         ROS_INFO("Falling pose FRONT");
         fallPoseFront();
-    }else{
-        ROS_INFO("Falling pose REAR");
-        fallPoseRear();
+    }
+    else if (fallingPose == PoseBack)
+    {
+        ROS_INFO("Falling pose BACK");
+        fallPoseBack();
+    }
+    else if (fallingPose == PoseLeft)
+    {
+        ROS_INFO("Falling pose LEFT");
+        fallPoseLeft();
+    }
+    else if (fallingPose == PoseRight)
+    {
+        ROS_INFO("Falling pose RIGHT");
+        fallPoseRight();
     }
 }
 
-void ThorMangFallingController::fallPoseFront(){
+void ThorMangFallingController::fallPoseFront()
+{
     //ARMS
 
     setJoint(1, 1.78); //r_shoulder_pitch
@@ -233,7 +253,8 @@ void ThorMangFallingController::fallPoseFront(){
     setJoint(26, 0.09); //l_ankle_roll
 }
 
-void ThorMangFallingController::fallPoseRear(){
+void ThorMangFallingController::fallPoseBack()
+{
     //ARMS
 
     setJoint(1, -0.79); //r_shoulder_pitch
@@ -279,33 +300,126 @@ void ThorMangFallingController::fallPoseRear(){
 
 }
 
-void ThorMangFallingController::goIntoFallPose(){
-    ROS_INFO("Going into FALL!");
-    ROS_INFO("Torque off in %f",fallPoseTime);
-    fallPoseDoneTime = (ros::WallTime::now() + ros::WallDuration(fallPoseTime));
-    MotionManager::GetInstance()->EnableLights(true);
+void ThorMangFallingController::fallPoseLeft()
+{
+    //ARMS
+
+    setJoint(1, -0.79); //r_shoulder_pitch
+    setJoint(2, 0.79); //l_shoulder_pitch
+
+    setJoint(3, 0.44); //r_shoulder_roll
+    setJoint(4, -0.44); //l_shoulder_roll
+
+    setJoint(5, 0.57); //r_shoulder_yaw
+    setJoint(6, -0.57); //l_shoulder_yaw
+
+    setJoint(7, 2.49); //r_elbow
+    setJoint(8, -2.49); //l_elbow
+
+    setJoint(9, -1.55); //r_wrist_yaw_1
+    setJoint(10, 1.55); //l_wrist_yaw_1
+
+    setJoint(11, 0.0); //r_wrist_roll
+    setJoint(12, 0.0); //l_wrist_roll
+
+    setJoint(13, 0.0); //r_wrist_yaw_2
+    setJoint(14, 0.0); //l_wrist_yaw_2
+
+    //LEGS
+
+    setJoint(15, -0.01); //r_hip_yaw
+    setJoint(16, 0.01); //l_hip_yaw
+
+    setJoint(17, 0.09); //r_hip_roll
+    setJoint(18, -0.09); //l_hip_roll
+
+    setJoint(19, 1.57); //r_hip_pitch
+    setJoint(20, -1.57); //l_hip_pitch
+
+    setJoint(21, -2.49); //r_knee
+    setJoint(22, 2.49); //l_knee
+
+    setJoint(23, -0.91);  //r_ankle_pitch
+    setJoint(24, 0.91); //l_ankle_pitch
+
+    setJoint(25, -0.09);  //r_ankle_roll
+    setJoint(26, 0.09); //l_ankle_roll
 
 }
 
-bool ThorMangFallingController::checkTorqueOff(){
-    ros::WallTime current = ros::WallTime::now();
-    if( current > fallPoseDoneTime ){
-        ROS_INFO("Fall pose done -> torque off");
+void ThorMangFallingController::fallPoseRight()
+{
+    //ARMS
+
+    setJoint(1, -0.79); //r_shoulder_pitch
+    setJoint(2, 0.79); //l_shoulder_pitch
+
+    setJoint(3, 0.44); //r_shoulder_roll
+    setJoint(4, -0.44); //l_shoulder_roll
+
+    setJoint(5, 0.57); //r_shoulder_yaw
+    setJoint(6, -0.57); //l_shoulder_yaw
+
+    setJoint(7, 2.49); //r_elbow
+    setJoint(8, -2.49); //l_elbow
+
+    setJoint(9, -1.55); //r_wrist_yaw_1
+    setJoint(10, 1.55); //l_wrist_yaw_1
+
+    setJoint(11, 0.0); //r_wrist_roll
+    setJoint(12, 0.0); //l_wrist_roll
+
+    setJoint(13, 0.0); //r_wrist_yaw_2
+    setJoint(14, 0.0); //l_wrist_yaw_2
+
+    //LEGS
+
+    setJoint(15, -0.01); //r_hip_yaw
+    setJoint(16, 0.01); //l_hip_yaw
+
+    setJoint(17, 0.09); //r_hip_roll
+    setJoint(18, -0.09); //l_hip_roll
+
+    setJoint(19, 1.57); //r_hip_pitch
+    setJoint(20, -1.57); //l_hip_pitch
+
+    setJoint(21, -2.49); //r_knee
+    setJoint(22, 2.49); //l_knee
+
+    setJoint(23, -0.91);  //r_ankle_pitch
+    setJoint(24, 0.91); //l_ankle_pitch
+
+    setJoint(25, -0.09);  //r_ankle_roll
+    setJoint(26, 0.09); //l_ankle_roll
+
+}
+
+bool ThorMangFallingController::checkTorqueOff()
+{
+    double roll = 0, pitch = 0, yaw = 0;
+    const double* imu_orientation = imu_sensor_handle.getOrientation();
+    tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
+    tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+
+    if (max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+    {
+        ROS_INFO("Torque off!");
         return true;
     }
     return false;
 }
 
-void ThorMangFallingController::disableTorque(){
+void ThorMangFallingController::disableTorque()
+{
     ROS_INFO("disable torque!");
     claimJoints();
     MotionManager::GetInstance()->EnableLights(false);
 
     for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
     {
-        MotionManager::GetInstance()->SetTorqueOn(m_RobotInfo[joint_index], false);
+        if (m_RobotInfo[joint_index].m_ID != 27 && m_RobotInfo[joint_index].m_ID != 28) // Except torso pitch and torso yaw!
+            MotionManager::GetInstance()->SetTorqueOn(m_RobotInfo[joint_index], false);
     }
-
 }
 
 
@@ -322,9 +436,6 @@ void ThorMangFallingController::sendInfoToControlModeSwitcher(){
         ROS_ERROR("Unable to calll control mode switcher.");
     }
 }
-
-
-
 
 void ThorMangFallingController::claimJoints()
 {
