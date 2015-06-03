@@ -184,22 +184,22 @@ void ThorMangFallingController::fallPose()
 
     if(fallingPose == PoseFront)
     {
-        ROS_INFO("Falling pose FRONT");
+        ROS_INFO_THROTTLE(5.0, "Falling pose FRONT");
 //        fallPoseFront();
     }
     else if (fallingPose == PoseBack)
     {
-        ROS_INFO("Falling pose BACK");
+        ROS_INFO_THROTTLE(5.0, "Falling pose BACK");
 //        fallPoseBack();
     }
     else if (fallingPose == PoseLeft)
     {
-        ROS_INFO("Falling pose LEFT");
+        ROS_INFO_THROTTLE(5.0, "Falling pose LEFT");
 //        fallPoseLeft();
     }
     else if (fallingPose == PoseRight)
     {
-        ROS_INFO("Falling pose RIGHT");
+        ROS_INFO_THROTTLE(5.0, "Falling pose RIGHT");
 //        fallPoseRight();
     }
 }
