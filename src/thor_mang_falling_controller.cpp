@@ -109,9 +109,6 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
             break;
         case TorqueOff:
             disableTorque();
-//            if( ros::WallTime::now() > testing_fall_timer){
-//                fallState = Disabled;
-//            }
             return;
         default:
             ROS_ERROR("Unknown state");
@@ -157,15 +154,11 @@ bool ThorMangFallingController::detectAndDecide()
 
     double fallDirection = atan2(-roll, pitch);
 
-    ROS_INFO("Checking attitude roll: %f pitch: %f direction: %f", roll, pitch, fallDirection);
+    ROS_DEBUG("Checking attitude roll: %f pitch: %f direction: %f", roll, pitch, fallDirection);
 
     // Fall detection.
     if ((max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
     {
-
-
-        ROS_INFO("FALL DETECTED! direction: %f", fallDirection);
-
         fallingPose = PoseFront;
         if (fabs(fallDirection) < M_PI/4.0)
             fallingPose = PoseFront; // front
@@ -176,8 +169,6 @@ bool ThorMangFallingController::detectAndDecide()
         else if (fallDirection < 0)
             fallingPose = PoseRight;
 
-        ROS_INFO("Fall pose decided. %d", fallingPose);
-
         return true;
     }
 
@@ -186,28 +177,28 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
-    limitSpeed();
-    claimJoints();
+//    limitSpeed();
+//    claimJoints();
 
     if(fallingPose == PoseFront)
     {
         ROS_INFO("Falling pose FRONT");
-        fallPoseFront();
+//        fallPoseFront();
     }
     else if (fallingPose == PoseBack)
     {
         ROS_INFO("Falling pose BACK");
-        fallPoseBack();
+//        fallPoseBack();
     }
     else if (fallingPose == PoseLeft)
     {
         ROS_INFO("Falling pose LEFT");
-        fallPoseLeft();
+//        fallPoseLeft();
     }
     else if (fallingPose == PoseRight)
     {
         ROS_INFO("Falling pose RIGHT");
-        fallPoseRight();
+//        fallPoseRight();
     }
 }
 
