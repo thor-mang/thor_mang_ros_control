@@ -93,7 +93,7 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
             if (detectAndDecide())
             {
                 MotionManager::GetInstance()->EnableLights(true);
-                //fallState = Falling;
+                fallState = Falling;
             }
             else
             {
