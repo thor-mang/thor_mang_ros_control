@@ -2,6 +2,7 @@
 
 #include "tf/tf.h"
 #include "motion/motionmanager.h"
+#include <thor_mang_ros_control/thor_mang_hardware_interface.h>
 
 namespace Thor
 {
@@ -149,6 +150,7 @@ void ThorMangFallingController::starting(const ros::Time& time)
 
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
+    unclaimJoints();
     Thor::MotionManager::GetInstance()->RemoveModule(this);
     fallState = Disabled;
     ROS_INFO("ThorMangFallingController::stopping");
@@ -205,13 +207,13 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
-//    limitSpeed();
-//    claimJoints();
+    limitSpeed();
+    claimJoints();
 
     if(fallingPose == PoseFront)
     {
         ROS_INFO_THROTTLE(5.0, "Falling pose FRONT");
-//        fallPoseFront();
+        fallPoseFront();
     }
     else if (fallingPose == PoseBack)
     {
@@ -234,26 +236,26 @@ void ThorMangFallingController::fallPoseFront()
 {
     //ARMS
 
-    setJoint(1, 1.78); //r_shoulder_pitch
-    setJoint(2, -1.78); //l_shoulder_pitch
+    setJoint(1, 1.43); //r_shoulder_pitch
+    setJoint(2, -1.43); //l_shoulder_pitch
 
-    setJoint(3, 0.33); //r_shoulder_roll
-    setJoint(4, -0.33); //l_shoulder_roll
+    setJoint(3, -0.085); //r_shoulder_roll
+    setJoint(4, 0.085); //l_shoulder_roll
 
-    setJoint(5, 0.53); //r_shoulder_yaw
-    setJoint(6, -0.53); //l_shoulder_yaw
+    setJoint(5, -0.036); //r_shoulder_yaw
+    setJoint(6, 0.036); //l_shoulder_yaw
 
-    setJoint(7, 2.03); //r_elbow
-    setJoint(8, -2.03); //l_elbow
+    setJoint(7, 2.16); //r_elbow
+    setJoint(8, -2.16); //l_elbow
 
-    setJoint(9, 0.71); //r_wrist_yaw_1
-    setJoint(10, -0.71); //l_wrist_yaw_1
+    setJoint(9, -3.22); //r_wrist_yaw_1
+    setJoint(10, 3.22); //l_wrist_yaw_1
 
-    setJoint(11, 0.97); //r_wrist_roll
-    setJoint(12, -0.97); //l_wrist_roll
+    setJoint(11, -0.9311); //r_wrist_roll
+    setJoint(12, 0.9311); //l_wrist_roll
 
-    setJoint(13, -0.90); //r_wrist_yaw_2
-    setJoint(14, 0.90); //l_wrist_yaw_2
+    setJoint(13, -0.02); //r_wrist_yaw_2
+    setJoint(14, 0.02); //l_wrist_yaw_2
 
     //LEGS
 
@@ -494,6 +496,22 @@ void ThorMangFallingController::claimJoints()
     }
 }
 
+void ThorMangFallingController::unclaimJoints() {
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+      if (m_RobotInfo[joint_index].m_ID > MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1)
+      {
+          ROS_WARN("Robot has joint with invalid id: %u", m_RobotInfo[joint_index].m_ID);
+          continue;
+      }
+
+      unsigned int id_index = m_RobotInfo[joint_index].m_ID-1;
+
+      // activate control
+      MotionStatus::m_EnableList[id_index].uID = const_cast<char*>("thor_mang_hardware_interface");
+  }
+}
+
 void ThorMangFallingController::setJointsToPose(){
     for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
     {
@@ -532,19 +550,11 @@ void ThorMangFallingController::setJoint(unsigned int servo_id, double value){
 }
 
 void ThorMangFallingController::limitSpeed(){
-    for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
-    {
-        if (m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 42 && m_RobotInfo[joint_index].m_DXLInfo->MODEL_NUM != 54)
-            continue;
+  ThorMangHardwareInterface::Instance()->limitJointSpeed(500);
+}
 
-        int id = m_RobotInfo[joint_index].m_ID;
-
-        int error = 0;
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_ACCELATION_LL, 4, &error); //0 -> unlimited
-        m_RobotInfo[joint_index].m_DXL_Comm->GetDXLInstance()->WriteDWord(id, PRO54::P_GOAL_VELOCITY_LL, 2000, &error); //0 -> unlimited
-        ROS_INFO("Setting speed limit for %d", joint_index);
-        ROS_ERROR_COND(error, "Error %d occured on ID %d", error, id);
-    }
+void ThorMangFallingController::unlimitSpeed() {
+  ThorMangHardwareInterface::Instance()->unlimitJointSpeed();
 }
 
 void ThorMangFallingController::modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result){

@@ -68,11 +68,13 @@ protected:
     void fallPoseLeft();
     void fallPoseRight();
     void limitSpeed();
+    void unlimitSpeed();
     ros::WallTime testing_fall_timer;
 
 private:
     void initJoints();
     void claimJoints();
+    void unclaimJoints();
     void setJointsToPose();
 
     ros::Publisher imu_rpy_pub;
