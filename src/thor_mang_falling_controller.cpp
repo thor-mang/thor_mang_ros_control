@@ -411,7 +411,7 @@ void ThorMangFallingController::disableTorque()
     ROS_INFO_THROTTLE(5.0,"disable torque!");
 
     torqueTestCounter++;
-    if (torqueTestCounter % 40 == 0)
+    if (torqueTestCounter % 20 == 0)
     {
         lightOn = !lightOn;
         MotionManager::GetInstance()->EnableLights(lightOn);
