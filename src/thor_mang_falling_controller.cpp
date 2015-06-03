@@ -55,17 +55,22 @@ ThorMangFallingController::ThorMangFallingController() : fallState(Disabled)
     uID = const_cast<char*>("thor_mang_falling_controller");
     torqueTestCounter = 0;
     lightOn = false;
+    stateTransitionCounter = 0;
+    rollOffset = 0;
+    pitchOffset = 0;
 }
 
 
 bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw, ros::NodeHandle& nh)
 {
-
     nh.param("fallDetectionAngleThreshold", fallDetectionAngleThreshold, 40.0);
     nh.param("fallRelaxAngleThreshold", fallRelaxAngleThreshold, 66.0);
-
+    nh.param("rollOffset", rollOffset, 0.0);
+    nh.param("pitchOffset", pitchOffset, 0.0);
 
     nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
+
+    imu_rpy_pub = nh.advertise<geometry_msgs::Vector3Stamped>("falling_controller/imu_rpy", 1);
 
     action_client.reset(new ChangeControlModeActionClient(control_mode_switch_name, true));
 
@@ -82,13 +87,29 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
         ROS_WARN("MotionStatus is not initialized");
     }
 
-
     return true;
 }
 
 // Called in every tick, after starting has been called.
 void ThorMangFallingController::update(const ros::Time& time, const ros::Duration& period)
 {
+    double roll = 0, pitch = 0, yaw = 0;
+    const double* imu_orientation = imu_sensor_handle.getOrientation();
+    tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
+    tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+
+    if (imu_rpy_pub.getNumSubscribers() > 0)
+    {
+        geometry_msgs::Vector3Stamped rpy;
+        rpy.header.frame_id = "/world";
+        rpy.header.stamp = ros::Time::now();
+        rpy.vector.x = roll;
+        rpy.vector.y = pitch;
+        rpy.vector.z = yaw;
+
+        imu_rpy_pub.publish(rpy);
+    }
+
     switch(fallState)
     {
         case Ready:
@@ -124,9 +145,6 @@ void ThorMangFallingController::starting(const ros::Time& time)
 
     fallState = Ready;
     ROS_INFO("[thor_mang_falling_controller] Starting...");
-
-    testing_fall_timer = ros::WallTime::now() + ros::WallDuration(5.0); //TODO remove me. Important
-    ROS_INFO("Testing fall!");
 }
 
 void ThorMangFallingController::stopping(const ros::Time& time)
@@ -158,9 +176,15 @@ bool ThorMangFallingController::detectAndDecide()
 
     ROS_DEBUG("Checking attitude roll: %f pitch: %f direction: %f", roll, pitch, fallDirection);
 
+    if ((std::max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
+        stateTransitionCounter++;
+
     // Fall detection.
-    if ((max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
+    //if ((std::max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
+    if (stateTransitionCounter > 5)
     {
+        stateTransitionCounter = 0;
+
         fallingPose = PoseFront;
         if (fabs(fallDirection) < M_PI/4.0)
             fallingPose = PoseFront; // front
@@ -398,8 +422,13 @@ bool ThorMangFallingController::checkTorqueOff()
     tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
     tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
-    if (max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+    if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+        stateTransitionCounter++;
+
+    //if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+    if (stateTransitionCounter > 5)
     {
+        stateTransitionCounter = 0;
         ROS_INFO("Torque off!");
         return true;
     }
