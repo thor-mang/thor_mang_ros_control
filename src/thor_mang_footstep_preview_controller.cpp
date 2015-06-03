@@ -354,9 +354,16 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
 
     int remaining_unreserved_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
 
+    // check of queue was cleared -> execute last step
+    if (steps.empty() && remaining_unreserved_steps > 0)
+      remaining_unreserved_steps -= 1;
+
     for(int i = 0; i < remaining_unreserved_steps; i++)
       PreviewControlWalking::GetInstance()->EraseLastStepData();
     total_steps_added -= remaining_unreserved_steps;
+
+    if (steps.empty())
+      return; // nothing todo behind this point
 
     ROS_INFO("[PreviewWalking] Generating step plan update...");
     vigir_footstep_planning_msgs::StepPlan step_plan;
@@ -413,7 +420,7 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
 
       vigir_footstep_planning::msgs::ExecuteStepPlanFeedback feedback;
       feedback.currently_executing_step_index = total_steps_added - remaining_steps + 1;
-      feedback.first_changeable_step_index = feedback.currently_executing_step_index + 2;
+      feedback.first_changeable_step_index = feedback.currently_executing_step_index + 1;
       feedback.last_performed_step_index = feedback.currently_executing_step_index - 1;
       execute_step_plan_as->publishFeedback(feedback);
     }
