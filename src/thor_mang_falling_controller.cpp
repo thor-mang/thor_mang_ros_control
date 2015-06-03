@@ -88,6 +88,8 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
         ROS_WARN("MotionStatus is not initialized");
     }
 
+    initJoints();
+
     return true;
 }
 
@@ -259,23 +261,23 @@ void ThorMangFallingController::fallPoseFront()
 
     //LEGS
 
-    setJoint(15, -0.01); //r_hip_yaw
-    setJoint(16, 0.01); //l_hip_yaw
+//    setJoint(15, -0.01); //r_hip_yaw
+//    setJoint(16, 0.01); //l_hip_yaw
 
-    setJoint(17, 0.09); //r_hip_roll
-    setJoint(18, -0.09); //l_hip_roll
+//    setJoint(17, 0.09); //r_hip_roll
+//    setJoint(18, -0.09); //l_hip_roll
 
-    setJoint(19, 1.57); //r_hip_pitch
-    setJoint(20, -1.57); //l_hip_pitch
+//    setJoint(19, 1.57); //r_hip_pitch
+//    setJoint(20, -1.57); //l_hip_pitch
 
-    setJoint(21, -2.49); //r_knee
-    setJoint(22, 2.49); //l_knee
+//    setJoint(21, -2.49); //r_knee
+//    setJoint(22, 2.49); //l_knee
 
-    setJoint(23, -0.91);  //r_ankle_pitch
-    setJoint(24, 0.91); //l_ankle_pitch
+//    setJoint(23, -0.91);  //r_ankle_pitch
+//    setJoint(24, 0.91); //l_ankle_pitch
 
-    setJoint(25, -0.09);  //r_ankle_roll
-    setJoint(26, 0.09); //l_ankle_roll
+//    setJoint(25, -0.09);  //r_ankle_roll
+//    setJoint(26, 0.09); //l_ankle_roll
 }
 
 void ThorMangFallingController::fallPoseBack()
@@ -544,7 +546,7 @@ void ThorMangFallingController::setJoint(unsigned int servo_id, double value){
         if(m_RobotInfo[joint_index].m_ID == servo_id){
             int id_index = m_RobotInfo[joint_index].m_ID-1;
             m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(value) + ros_joint_offsets[id_index];
-            ROS_INFO("Setting koint value for %d (%d): %f", servo_id, joint_index, value);
+            // ROS_INFO("Setting joint value for %d (%d): %f", servo_id, joint_index, value);
             return;
         }
 }
