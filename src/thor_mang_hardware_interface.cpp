@@ -250,6 +250,9 @@ void ThorMangHardwareInterface::Initialize()
   robot_transforms_ptr->init();
   state_estimator.setRobotTransforms(robot_transforms_ptr);
   state_estimator.init(ros::NodeHandle("state_estimator"));
+
+  ros::NodeHandle joint_cmds_nh;
+  joint_cmds_pub_ = joint_cmds_nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
 }
 
 void ThorMangHardwareInterface::Process()
@@ -336,6 +339,24 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   state_estimator.update();
 }
 
+// not real-time save
+void ThorMangHardwareInterface::publishJointCmds() {
+  sensor_msgs::JointState joint_cmds;
+  joint_cmds.header.stamp = ros::Time::now();
+
+  joint_cmds.name.resize(m_RobotInfo.size());
+
+  joint_cmds.position.resize(m_RobotInfo.size());
+  joint_cmds.effort.resize(m_RobotInfo.size(), 0);
+  joint_cmds.velocity.resize(m_RobotInfo.size(), 0);
+
+  for (unsigned int i = 0; i < m_RobotInfo.size(); i++) {
+    joint_cmds.position[i] = m_RobotInfo[i].m_Value;
+    joint_cmds.name[i] = jointUIDs[m_RobotInfo[i].m_ID -1];
+  }
+  joint_cmds_pub_.publish(joint_cmds);
+}
+
 void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
 {
   if (m_RobotInfo.size() == 0)
@@ -352,6 +373,9 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
       continue;
 
     m_RobotInfo[joint_index].m_Value = m_RobotInfo[joint_index].m_DXLInfo->Rad2Value(cmd[id_index] - calibration_joint_offsets[id_index]) + ros_joint_offsets[id_index];
+  }
+  if (joint_cmds_pub_.getNumSubscribers() != 0) {
+    publishJointCmds();
   }
 }
 

@@ -143,6 +143,8 @@ public:
   void resetFtSensor(unsigned int sensor_id);
   void startCalibration();
 
+  void publishJointCmds();
+
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
   typedef boost::shared_ptr<const ThorMangHardwareInterface> ConstPtr;
@@ -238,6 +240,8 @@ protected:
 
   typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
   boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
+
+  ros::Publisher joint_cmds_pub_;
 };
 }
 
