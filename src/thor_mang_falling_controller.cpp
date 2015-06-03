@@ -53,6 +53,8 @@ const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 ThorMangFallingController::ThorMangFallingController() : fallState(Disabled)
 {
     uID = const_cast<char*>("thor_mang_falling_controller");
+    torqueTestCounter = 0;
+    lightOn = false;
 }
 
 
@@ -406,7 +408,17 @@ bool ThorMangFallingController::checkTorqueOff()
 
 void ThorMangFallingController::disableTorque()
 {
-    ROS_INFO("disable torque!");
+    ROS_INFO_THROTTLE(5.0,"disable torque!");
+
+    torqueTestCounter++;
+    if (torqueTestCounter % 40 == 0)
+    {
+        lightOn = !lightOn;
+        MotionManager::GetInstance()->EnableLights(lightOn);
+    }
+
+    return;
+
     claimJoints();
     MotionManager::GetInstance()->EnableLights(false);
 

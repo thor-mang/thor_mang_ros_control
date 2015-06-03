@@ -79,6 +79,9 @@ private:
     double fallDetectionAngleThreshold;
     double fallRelaxAngleThreshold;
 
+    int torqueTestCounter;
+    bool lightOn;
+
     double fallPoseTime;
 
     std::map<unsigned int, unsigned int> servo_id_mapping;
