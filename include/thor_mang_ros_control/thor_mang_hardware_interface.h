@@ -56,6 +56,10 @@
 #include <robot_transforms/robot_transforms.h>
 #include <biped_state_estimator/biped_state_estimator.h>
 
+// Dyn reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <thor_mang_ros_control/HardwareInterfaceConfig.h>
+
 #define G_ACC 9.80665
 
 
@@ -131,11 +135,15 @@ public:
   // interfaces
   void setJointStateRate(double joint_state_rate);
 
-  void enableTorqueOnStart(bool enable);
   void setTorqueOn(int id, bool enable);
   void setTorqueOn(bool enable);
 
-  void enableLights(bool enable);
+  void setLightsEnabled(bool enable);
+
+  void resetFtSensor(unsigned int sensor_id);
+  void startCalibration();
+
+  void publishJointCmds();
 
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
@@ -147,8 +155,6 @@ public:
   static const std::string jointUIDs[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
   static const std::string ftSensorUIDs[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
-  void resetFtSensor(unsigned int sensor_id);
-
 protected:
   ThorMangHardwareInterface();
   ThorMangHardwareInterface(ThorMangHardwareInterface const&);
@@ -158,10 +164,12 @@ protected:
   JointData* getJoint(int id);
 
   // Robot bringup
-  bool robotBringUp();
   bool goReadyPose();
 
-  void initJointPosition(unsigned int joint_index, int value);
+  void setJointPosition(unsigned int joint_index, int value);
+  void setJointVelocity(unsigned int joint_index, int value);
+  void setVelocityGain(unsigned int joint_index, int value);
+  void setJointAcceleration(unsigned int joint_index, int value);
   void initINS();
   void InitForceTorque();
 
@@ -177,11 +185,11 @@ protected:
    * ROS zero: "fully extended arms/legs"
    **/
   static const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
+  double calibration_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
 
   // parameters
   double joint_state_intervall;
   ros::Time last_joint_state_read;
-  bool torque_on_start;
 
   // mutex
   mutable boost::mutex dynamixel_mutex;
@@ -189,14 +197,12 @@ protected:
   // INS
   boost::shared_ptr<Ins> ins;
 
-  // ros controll stuff
+  // robot hardware interfaces
   hardware_interface::JointStateInterface joint_state_interface;
   hardware_interface::PositionJointInterface pos_joint_interface;
 
   hardware_interface::ImuSensorInterface imu_sensor_interface;
   hardware_interface::ForceTorqueSensorInterface force_torque_sensor_interface;
-
-  hardware_interface::ThorMangFootstepInterface footstep_interface;
 
   double cmd[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>
   double pos[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1]; // todo: replace with std::map<std::string, double>
@@ -215,7 +221,7 @@ protected:
   double force_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
   double torque_compensated[MAXIMUM_NUMBER_OF_FT_SENSORS][3];
 
-  // Zero
+  // ros FT calibration
   FTCompensation::Vector6d force_torque_offset[MAXIMUM_NUMBER_OF_FT_SENSORS];
   unsigned int num_ft_measurements[MAXIMUM_NUMBER_OF_FT_SENSORS];
   bool has_ft_offsets[MAXIMUM_NUMBER_OF_FT_SENSORS];
@@ -224,10 +230,19 @@ protected:
   FTCompensation::Compensation ft_compensation[MAXIMUM_NUMBER_OF_FT_SENSORS];
 
   // Robot Transforms
-	boost::shared_ptr<robot_tools::RobotTransforms> robot_transforms_ptr;
+  boost::shared_ptr<robot_tools::RobotTransforms> robot_transforms_ptr;
 
-	// State estimation
-	robot_tools::StateEstimator state_estimator;
+  // State estimation
+  robot_tools::StateEstimator state_estimator;
+
+  //dyn_reconfigure_callback
+  void dynRecParamCallback(thor_mang_ros_control::HardwareInterfaceConfig &config, uint32_t level);
+
+  typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
+  boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
+
+  //
+  ros::Publisher joint_cmds_pub_;
 };
 }
 

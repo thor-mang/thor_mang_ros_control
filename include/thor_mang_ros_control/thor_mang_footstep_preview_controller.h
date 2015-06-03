@@ -34,6 +34,8 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 
+#include <boost/thread/mutex.hpp>
+
 // ros control
 #include <controller_interface/controller.h>
 #include <pluginlib/class_list_macros.h>
@@ -50,6 +52,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <thor_mang_ros_control/FootstepPreviewControllerConfig.h>
 
+#include <queue>
+
 
 
 namespace Thor
@@ -60,6 +64,7 @@ class ThorMangFootstepPreviewController
 {
 public:
   ThorMangFootstepPreviewController();
+  ~ThorMangFootstepPreviewController();
 
   // ros control
   bool init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle& nh);
@@ -76,14 +81,15 @@ public:
   void StartWalking();
 
 protected:
-  void InitImuData();
-  void InitFtDataOnGround();
+  bool initImuData();
+  bool initFtDataOnGround();
 
   void initWalkingParameters();
   void claimJoints();
   void unclaimJoints();
 
   bool claim_arms;
+
   double hip_pitch_offset;
   double ankle_pitch_offset;
   double walk_stabilizer_gain_ratio;
@@ -99,21 +105,45 @@ protected:
   double foot_landing_detect_n;
 
   // action server calls
-  void executeStepPlanAction(vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr& as);
+  typedef vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction> ActionServer;
+  void executeStepPlanAction(ActionServer::Ptr& as);
+  void stepPlanPreempted();
+
+  // dyn_reconfigure_callback
+  void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
 
   // action servers
-  vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction>::Ptr execute_step_plan_as;
+  ActionServer::Ptr execute_step_plan_as;
 
-  //dyn_reconfigure_callback
-  void dynRecParamCallback(thor_mang_ros_control::FootstepPreviewControllerConfig &config, uint32_t level);
+  // dynamic reconfigure
+  typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
+  boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
 
   // time measurement to get current rate
   ros::Time last_call;
   double system_control_unit_time_sec;
 
-	typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
-  boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
+  // pending step plan
+  std::map<int, vigir_footstep_planning_msgs::Step> steps;
 
+  // step execution status
+  int remaining_steps;
+  int first_changeable_step;
+  int total_steps_added;
+  bool step_queue_changed;
+
+  // IMU bias
+  unsigned int current_imu_measurements;
+  unsigned int max_imu_measurements;
+  double imu_bias[2];
+
+  // FT bias
+  unsigned int current_ft_measurements;
+  unsigned int max_ft_measurements;
+  double ft_bias_on_ground[12];
+
+  // mutex
+  mutable boost::mutex steps_mutex;
 };
 }
 
