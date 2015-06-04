@@ -67,8 +67,8 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
   nh_ = nh;
   nh.param("fallDetectionAngleThreshold", fallDetectionAngleThreshold, 40.0);
   nh.param("fallRelaxAngleThreshold", fallRelaxAngleThreshold, 66.0);
-  nh.param("rollOffset", rollOffset, 0.0);
-  nh.param("pitchOffset", pitchOffset, 0.0);
+  nh.param("rollOffset", rollOffset, 0.02);
+  nh.param("pitchOffset", pitchOffset, 0.15);
   nh.param("vel_goal", vel_goal, 500);
 
   nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
@@ -102,6 +102,8 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
   const double* imu_orientation = imu_sensor_handle.getOrientation();
   tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
   tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+  roll -= rollOffset;
+  pitch -= pitchOffset;
 
   if (imu_rpy_pub.getNumSubscribers() > 0)
   {
@@ -122,10 +124,6 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
       {
         MotionManager::GetInstance()->EnableLights(true);
         fallState = Falling;
-      }
-      else
-      {
-        MotionManager::GetInstance()->EnableLights(false);
       }
       break;
     case Falling:
@@ -164,6 +162,8 @@ void ThorMangFallingController::starting(const ros::Time& time)
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
   unclaimJoints();
+  //unlimitSpeed();
+  MotionManager::GetInstance()->EnableLights(false);
   Thor::MotionManager::GetInstance()->RemoveModule(this);
   fallState = Disabled;
   ROS_INFO("ThorMangFallingController::stopping");
@@ -186,6 +186,8 @@ bool ThorMangFallingController::detectAndDecide()
   const double* imu_orientation = imu_sensor_handle.getOrientation();
   tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
   tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+  roll -= rollOffset;
+  pitch -= pitchOffset;
 
   double fallDirection = atan2(-roll, pitch);
 
@@ -197,7 +199,6 @@ bool ThorMangFallingController::detectAndDecide()
     stateTransitionCounter = 0;
 
   // Fall detection.
-  //if ((std::max(fabs(roll), fabs(pitch))*180.0/M_PI) > fallDetectionAngleThreshold)
   if (stateTransitionCounter > 5)
   {
     stateTransitionCounter = 0;
@@ -220,14 +221,10 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
-
-  return;
-
-  nh_.param("vel_goal", vel_goal, 500);
-  limitSpeed();
+//  limitSpeed();
   claimJoints();
 
-  if(fallingPose == PoseFront)
+  if (fallingPose == PoseFront)
   {
     ROS_INFO_THROTTLE(5.0, "Falling pose FRONT");
     fallPoseFront();
@@ -273,6 +270,10 @@ void ThorMangFallingController::fallPoseFront()
 
   setJoint(13, -0.02); //r_wrist_yaw_2
   setJoint(14, 0.02); //l_wrist_yaw_2
+
+  // Torso
+  setJoint(27, 0); // waist pan
+  setJoint(28, 0); // waist tilt
 
   //LEGS
 
@@ -433,7 +434,6 @@ void ThorMangFallingController::fallPoseRight()
 
   setJoint(25, -0.09);  //r_ankle_roll
   setJoint(26, 0.09); //l_ankle_roll
-
 }
 
 bool ThorMangFallingController::checkTorqueOff()
@@ -442,13 +442,14 @@ bool ThorMangFallingController::checkTorqueOff()
     const double* imu_orientation = imu_sensor_handle.getOrientation();
     tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
     tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+    roll -= rollOffset;
+    pitch -= pitchOffset;
 
     if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
         stateTransitionCounter++;
     else
         stateTransitionCounter = 0;
 
-    //if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
     if (stateTransitionCounter > 5)
     {
         stateTransitionCounter = 0;
@@ -470,9 +471,6 @@ void ThorMangFallingController::disableTorque()
     MotionManager::GetInstance()->EnableLights(lightOn);
   }
 
-  return; // NOT YET
-
-  claimJoints();
   MotionManager::GetInstance()->EnableLights(false);
 
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
