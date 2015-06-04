@@ -22,7 +22,7 @@
     pitchThresholdPositive: 0.3
     pitchThresholdNegative: -0.15
     fallPoseTime: 7.500
-    vel_goal: 500
+    vel_goal: 0
     control_mode_switch_name: '/mode_controllers/control_mode_controller/change_control_mode'
 
 
