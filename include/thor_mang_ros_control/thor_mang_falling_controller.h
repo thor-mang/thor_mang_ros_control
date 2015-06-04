@@ -86,6 +86,7 @@ private:
 
     int torqueTestCounter;
     bool lightOn;
+    unsigned int vel_goal;
 
     std::map<unsigned int, unsigned int> servo_id_mapping;
 
