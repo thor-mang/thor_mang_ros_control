@@ -220,6 +220,9 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
+
+  return;
+
   nh_.param("vel_goal", vel_goal, 500);
   limitSpeed();
   claimJoints();
@@ -435,24 +438,25 @@ void ThorMangFallingController::fallPoseRight()
 
 bool ThorMangFallingController::checkTorqueOff()
 {
-  double roll = 0, pitch = 0, yaw = 0;
-  const double* imu_orientation = imu_sensor_handle.getOrientation();
-  tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
-  tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+    double roll = 0, pitch = 0, yaw = 0;
+    const double* imu_orientation = imu_sensor_handle.getOrientation();
+    tf::Quaternion orientation(imu_orientation[0] , imu_orientation[1], imu_orientation[2], imu_orientation[3] );
+    tf::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
-  if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
-    stateTransitionCounter++;
-  else
-    stateTransitionCounter = 0;
+    if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+        stateTransitionCounter++;
+    else
+        stateTransitionCounter = 0;
 
-  //if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
-  if (stateTransitionCounter > 5)
-  {
-    stateTransitionCounter = 0;
-    ROS_INFO("Torque off!");
-    return true;
-  }
-  return false;
+    //if (std::max(fabs(roll), fabs(pitch))*180.0/M_PI > fallRelaxAngleThreshold)
+    if (stateTransitionCounter > 5)
+    {
+        stateTransitionCounter = 0;
+        ROS_INFO("Torque off!");
+        return true;
+    }
+
+    return false;
 }
 
 void ThorMangFallingController::disableTorque()
@@ -466,7 +470,7 @@ void ThorMangFallingController::disableTorque()
     MotionManager::GetInstance()->EnableLights(lightOn);
   }
 
-  return;
+  return; // NOT YET
 
   claimJoints();
   MotionManager::GetInstance()->EnableLights(false);
