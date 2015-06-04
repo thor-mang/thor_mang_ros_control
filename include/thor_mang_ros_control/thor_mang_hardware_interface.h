@@ -145,6 +145,9 @@ public:
 
   void publishJointCmds();
 
+  void limitJointSpeed(unsigned int limit);
+  void unlimitJointSpeed();
+
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
   typedef boost::shared_ptr<const ThorMangHardwareInterface> ConstPtr;
