@@ -587,7 +587,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 21)
       setJointPosition(joint_index, outValue[3]);
     else if (id == 23)
-      setJointPosition(joint_index, outValue[4] + 8000);
+      setJointPosition(joint_index, outValue[4] + 6000);
     else if (id == 25)
       setJointPosition(joint_index, outValue[5]);
 
@@ -600,7 +600,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 22)
       setJointPosition(joint_index, outValue[9]);
     else if (id == 24)
-      setJointPosition(joint_index, outValue[10] - 8000);
+      setJointPosition(joint_index, outValue[10] - 6000);
     else if (id == 26)
       setJointPosition(joint_index, outValue[11]);
 
