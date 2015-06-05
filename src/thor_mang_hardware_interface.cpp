@@ -225,8 +225,8 @@ void ThorMangHardwareInterface::Initialize()
   state_estimator.setRobotTransforms(robot_transforms_ptr);
   state_estimator.init(ros::NodeHandle("state_estimator"));
 
-  ros::NodeHandle joint_cmds_nh;
-  joint_cmds_pub_ = joint_cmds_nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
+  ros::NodeHandle nh;
+  joint_cmds_pub_ = nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
 }
 
 void ThorMangHardwareInterface::Process()
@@ -569,7 +569,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 17)
       setJointPosition(joint_index, outValue[1]);
     else if (id == 19)
-      setJointPosition(joint_index, outValue[2] + 6000);
+      setJointPosition(joint_index, outValue[2]);
     else if (id == 21)
       setJointPosition(joint_index, outValue[3]);
     else if (id == 23)
@@ -582,7 +582,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 18)
       setJointPosition(joint_index, outValue[7]);
     else if (id == 20)
-      setJointPosition(joint_index, outValue[8] - 6000);
+      setJointPosition(joint_index, outValue[8]);
     else if (id == 22)
       setJointPosition(joint_index, outValue[9]);
     else if (id == 24)
