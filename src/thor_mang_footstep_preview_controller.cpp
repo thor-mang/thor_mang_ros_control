@@ -358,8 +358,11 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     int remaining_unreserved_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
 
     // check of queue was cleared -> execute last step
-    if (steps.empty() && remaining_unreserved_steps > 0)
-      remaining_unreserved_steps -= 1;
+    if (steps.empty())
+      remaining_unreserved_steps -= 2;
+
+    if (remaining_unreserved_steps < 0)
+      remaining_unreserved_steps = 0;
 
     for(int i = 0; i < remaining_unreserved_steps; i++)
       PreviewControlWalking::GetInstance()->EraseLastStepData();

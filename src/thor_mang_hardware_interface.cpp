@@ -397,17 +397,31 @@ JointData* ThorMangHardwareInterface::getJoint(int id)
   return NULL;
 }
 
-bool ThorMangHardwareInterface::goReadyPose()
-{
-  ROS_WARN("Going to ready pose!");
+void ThorMangHardwareInterface::limitJointSpeed(unsigned int limit) {
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    setJointVelocity(joint_index, 2000);
+    setJointVelocity(joint_index, limit);
     setJointAcceleration(joint_index, 4);
 
     usleep(1000);
   }
+}
+
+void ThorMangHardwareInterface::unlimitJointSpeed() {
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    setJointVelocity(joint_index, 0); // remove limits
+    setJointAcceleration(joint_index, 0);
+
+    usleep(1000);
+  }
+}
+
+bool ThorMangHardwareInterface::goReadyPose()
+{
+  ROS_WARN("Going to ready pose!");
+  limitJointSpeed(2000);
 
   // compute trajectory
   // ROS_INFO("Compute trajectory to initial pose.");
@@ -598,13 +612,7 @@ bool ThorMangHardwareInterface::goReadyPose()
   usleep(5000000); // 5
 
   // speed up servos again
-  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
-  {
-    setJointVelocity(joint_index, 0); // remove limits
-    setJointAcceleration(joint_index, 0);
-
-    usleep(1000);
-  }
+  unlimitJointSpeed();
 
   return true;
 }
