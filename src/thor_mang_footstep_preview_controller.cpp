@@ -235,6 +235,23 @@ bool ThorMangFootstepPreviewController::initFtDataOnGround()
           ft_bias_on_ground[3], ft_bias_on_ground[4], ft_bias_on_ground[5],
           ft_bias_on_ground[6], ft_bias_on_ground[7], ft_bias_on_ground[8],
           ft_bias_on_ground[9], ft_bias_on_ground[10], ft_bias_on_ground[11]);
+
+      double fz_right_gnd = ft_bias_on_ground[2];
+      double fz_left_gnd = ft_bias_on_ground[8];
+      double ft_gnd = fz_right_gnd + fz_left_gnd;
+
+      double right_foot_offset[6], left_foot_offset[6];
+
+      MotionManager::GetInstance()->RightLegFTSensor.getForceTorqueBias(&right_foot_offset[0], &right_foot_offset[1], &right_foot_offset[2],
+                                                                        &right_foot_offset[3], &right_foot_offset[4], &right_foot_offset[5]);
+
+      MotionManager::GetInstance()->LeftLegFTSensor.getForceTorqueBias(&left_foot_offset[0], &left_foot_offset[1], &left_foot_offset[2],
+                                                                       &left_foot_offset[3], &left_foot_offset[4], &left_foot_offset[5]);
+      double ft_air = right_foot_offset[2] + left_foot_offset[2];
+
+      double scale = (ft_gnd - ft_air) / (55 * 9.81);
+      PreviewControlWalking::GetInstance()->SetForceTorqueScalefactor(scale, scale);
+
     }
     else
       return false;
