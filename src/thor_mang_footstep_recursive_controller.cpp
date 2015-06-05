@@ -129,15 +129,6 @@ void ThorMangFootstepRecursiveController::InitWalking()
   RecursiveWalking::GetInstance()->BALANCE_LEFT_ROLL_GAIN_BY_FT = 0.01*0.1*2.0;
   RecursiveWalking::GetInstance()->BALANCE_LEFT_PITCH_GAIN_BY_FT = -0.01*0.1*2.0;
 
-  RecursiveWalking::GetInstance()->BALANCE_HIP_PITCH_SETTLING_TIME = 1.0;
-  RecursiveWalking::GetInstance()->BALANCE_Z_SETTLING_TIME = 1.0;
-
-  RecursiveWalking::GetInstance()->BALANCE_RIGHT_ANKLE_ROLL_SETTLING_TIME = 1.0;
-  RecursiveWalking::GetInstance()->BALANCE_RIGHT_ANKLE_PITCH_SETTLING_TIME = 1.0;
-
-  RecursiveWalking::GetInstance()->BALANCE_LEFT_ANKLE_ROLL_SETTLING_TIME = 1.0;
-  RecursiveWalking::GetInstance()->BALANCE_LEFT_ANKLE_PITCH_SETTLING_TIME = 1.0;
-
   RecursiveWalking::GetInstance()->FOOT_LANDING_OFFSET_GAIN =   +1.0*0;
   RecursiveWalking::GetInstance()->FOOT_LANDING_DETECT_N = 50;
 
