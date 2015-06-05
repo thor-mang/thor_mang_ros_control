@@ -39,6 +39,7 @@
 // ros control
 #include <controller_interface/controller.h>
 #include <pluginlib/class_list_macros.h>
+#include <std_msgs/Float64MultiArray.h>
 
 // THOR-OP includes
 #include <framework/Thor.h>
@@ -88,6 +89,9 @@ protected:
   void claimJoints();
   void unclaimJoints();
 
+  void publishCurrentPitchOffset();
+  void offsetCb(const std_msgs::Float64MultiArrayConstPtr& array_ptr);
+
   bool claim_arms;
 
   double hip_pitch_offset;
@@ -118,6 +122,10 @@ protected:
   // dynamic reconfigure
   typedef dynamic_reconfigure::Server<thor_mang_ros_control::FootstepPreviewControllerConfig> FootstepPreviewConfigServer;
   boost::shared_ptr<FootstepPreviewConfigServer> dyn_rec_server_;
+
+  // reconfig via topic
+  ros::Subscriber offset_sub_;
+  ros::Publisher offset_ack_pub_;
 
   // time measurement to get current rate
   ros::Time last_call;
