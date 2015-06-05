@@ -68,11 +68,13 @@ protected:
     void fallPoseLeft();
     void fallPoseRight();
     void limitSpeed();
+    void unlimitSpeed();
     ros::WallTime testing_fall_timer;
 
 private:
     void initJoints();
     void claimJoints();
+    void unclaimJoints();
     void setJointsToPose();
 
     ros::Publisher imu_rpy_pub;
@@ -84,6 +86,9 @@ private:
 
     int torqueTestCounter;
     bool lightOn;
+    int vel_goal;
+
+    ros::NodeHandle nh_;
 
     std::map<unsigned int, unsigned int> servo_id_mapping;
 
