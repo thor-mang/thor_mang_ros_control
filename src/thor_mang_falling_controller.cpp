@@ -65,7 +65,7 @@ ThorMangFallingController::ThorMangFallingController() : fallState(Disabled)
 bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw, ros::NodeHandle& nh)
 {
   nh_ = nh;
-  nh.param("fallDetectionAngleThreshold", fallDetectionAngleThreshold, 40.0);
+  nh.param("fallDetectionAngleThreshold", fallDetectionAngleThreshold, 32.0);
   nh.param("fallRelaxAngleThreshold", fallRelaxAngleThreshold, 66.0);
   nh.param("rollOffset", rollOffset, 0.02);
   nh.param("pitchOffset", pitchOffset, 0.15);
@@ -128,6 +128,7 @@ void ThorMangFallingController::update(const ros::Time& time, const ros::Duratio
       break;
     case Falling:
       fallPose();
+      sendInfoToControlModeSwitcher();
       if (checkTorqueOff())
       {
         fallState = TorqueOff;
