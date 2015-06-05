@@ -7,8 +7,6 @@
 namespace Thor
 {
 
-const bool debugMode = true; //TODO remove
-
 const int ros_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1] =
 {
   0,        // r_shoulder_pitch
@@ -69,7 +67,7 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
   nh.param("fallRelaxAngleThreshold", fallRelaxAngleThreshold, 66.0);
   nh.param("rollOffset", rollOffset, 0.02);
   nh.param("pitchOffset", pitchOffset, 0.15);
-  nh.param("vel_goal", vel_goal, 500);
+  nh.param("vel_goal", vel_goal, 2000);
 
   nh.param<std::string>("control_mode_switch_name", control_mode_switch_name, "/mode_controllers/control_mode_controller/change_control_mode");
 
@@ -91,6 +89,8 @@ bool ThorMangFallingController::init(hardware_interface::ImuSensorInterface *hw,
   }
 
   initJoints();
+
+  MotionManager::GetInstance()->EnableLights(false);
 
   return true;
 }
@@ -163,7 +163,7 @@ void ThorMangFallingController::starting(const ros::Time& time)
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
   unclaimJoints();
-  //unlimitSpeed();
+  unlimitSpeed();
   MotionManager::GetInstance()->EnableLights(false);
   Thor::MotionManager::GetInstance()->RemoveModule(this);
   fallState = Disabled;
@@ -222,7 +222,7 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
-//  limitSpeed();
+  limitSpeed();
   claimJoints();
 
   if (fallingPose == PoseFront)
@@ -233,17 +233,17 @@ void ThorMangFallingController::fallPose()
   else if (fallingPose == PoseBack)
   {
     ROS_INFO_THROTTLE(5.0, "Falling pose BACK");
-    //        fallPoseBack();
+    fallPoseBack();
   }
   else if (fallingPose == PoseLeft)
   {
     ROS_INFO_THROTTLE(5.0, "Falling pose LEFT");
-    //        fallPoseLeft();
+    fallPoseLeft();
   }
   else if (fallingPose == PoseRight)
   {
     ROS_INFO_THROTTLE(5.0, "Falling pose RIGHT");
-    //        fallPoseRight();
+    fallPoseRight();
   }
 }
 
@@ -300,141 +300,112 @@ void ThorMangFallingController::fallPoseFront()
 void ThorMangFallingController::fallPoseBack()
 {
   //ARMS
+  setJoint(1, -1); //r_shoulder_pitch
+  setJoint(2, 1); //l_shoulder_pitch
 
-  setJoint(1, -0.79); //r_shoulder_pitch
-  setJoint(2, 0.79); //l_shoulder_pitch
+  setJoint(3, -0.0101); //r_shoulder_roll
+  setJoint(4, 0.0101); //l_shoulder_roll
 
-  setJoint(3, 0.44); //r_shoulder_roll
-  setJoint(4, -0.44); //l_shoulder_roll
+  setJoint(5, 0.03); //r_shoulder_yaw
+  setJoint(6, -0.03); //l_shoulder_yaw
 
-  setJoint(5, 0.57); //r_shoulder_yaw
-  setJoint(6, -0.57); //l_shoulder_yaw
-
-  setJoint(7, 2.49); //r_elbow
-  setJoint(8, -2.49); //l_elbow
+  setJoint(7, 2.5851); //r_elbow
+  setJoint(8, -2.5851); //l_elbow
 
   setJoint(9, -1.55); //r_wrist_yaw_1
   setJoint(10, 1.55); //l_wrist_yaw_1
 
-  setJoint(11, 0.0); //r_wrist_roll
-  setJoint(12, 0.0); //l_wrist_roll
+  setJoint(11, -0.21); //r_wrist_roll
+  setJoint(12, 0.21); //l_wrist_roll
 
   setJoint(13, 0.0); //r_wrist_yaw_2
   setJoint(14, 0.0); //l_wrist_yaw_2
 
+  // Torso
+  setJoint(27, 0); // waist pan
+  setJoint(28, 0.697); // waist tilt
+
   //LEGS
+  setJoint(15, -0.0); //r_hip_yaw
+  setJoint(16, 0.0); //l_hip_yaw
 
-  setJoint(15, -0.01); //r_hip_yaw
-  setJoint(16, 0.01); //l_hip_yaw
+  setJoint(17, 0.0948); //r_hip_roll
+  setJoint(18, -0.0948); //l_hip_roll
 
-  setJoint(17, 0.09); //r_hip_roll
-  setJoint(18, -0.09); //l_hip_roll
+  setJoint(19,  0.174); //r_hip_pitch
+  setJoint(20,  -0.174); //l_hip_pitch
 
-  setJoint(19, 1.57); //r_hip_pitch
-  setJoint(20, -1.57); //l_hip_pitch
+  setJoint(21, -0.0544); //r_knee
+  setJoint(22, 0.0544); //l_knee
 
-  setJoint(21, -2.49); //r_knee
-  setJoint(22, 2.49); //l_knee
+  setJoint(23, 0.096);  //r_ankle_pitch
+  setJoint(24, -0.096); //l_ankle_pitch
 
-  setJoint(23, -0.91);  //r_ankle_pitch
-  setJoint(24, 0.91); //l_ankle_pitch
-
-  setJoint(25, -0.09);  //r_ankle_roll
-  setJoint(26, 0.09); //l_ankle_roll
+  setJoint(25, 0.0783);  //r_ankle_roll
+  setJoint(26, -0.0783); //l_ankle_roll
 
 }
 
 void ThorMangFallingController::fallPoseLeft()
 {
   //ARMS
-
   setJoint(1, -0.79); //r_shoulder_pitch
-  setJoint(2, 0.79); //l_shoulder_pitch
+  setJoint(2, -0.2123); //l_shoulder_pitch
 
-  setJoint(3, 0.44); //r_shoulder_roll
-  setJoint(4, -0.44); //l_shoulder_roll
+  setJoint(3, 0.2691); //r_shoulder_roll
+  setJoint(4, 0.0842); //l_shoulder_roll
 
-  setJoint(5, 0.57); //r_shoulder_yaw
-  setJoint(6, -0.57); //l_shoulder_yaw
+  setJoint(5, 0.0); //r_shoulder_yaw
+  setJoint(6, 0.0); //l_shoulder_yaw
 
-  setJoint(7, 2.49); //r_elbow
-  setJoint(8, -2.49); //l_elbow
+  setJoint(7, 1.5174); //r_elbow
+  setJoint(8, -1.3463); //l_elbow
 
   setJoint(9, -1.55); //r_wrist_yaw_1
-  setJoint(10, 1.55); //l_wrist_yaw_1
+  setJoint(10, 1.478); //l_wrist_yaw_1
 
-  setJoint(11, 0.0); //r_wrist_roll
-  setJoint(12, 0.0); //l_wrist_roll
+  setJoint(11, 0.0163); //r_wrist_roll
+  setJoint(12, -0.8534); //l_wrist_roll
 
   setJoint(13, 0.0); //r_wrist_yaw_2
-  setJoint(14, 0.0); //l_wrist_yaw_2
+  setJoint(14, -0.0283); //l_wrist_yaw_2
 
-  //LEGS
+  // Torso
+  setJoint(27, 0); // waist pan
+  setJoint(28, 0); // waist tilt
 
-  setJoint(15, -0.01); //r_hip_yaw
-  setJoint(16, 0.01); //l_hip_yaw
-
-  setJoint(17, 0.09); //r_hip_roll
-  setJoint(18, -0.09); //l_hip_roll
-
-  setJoint(19, 1.57); //r_hip_pitch
-  setJoint(20, -1.57); //l_hip_pitch
-
-  setJoint(21, -2.49); //r_knee
-  setJoint(22, 2.49); //l_knee
-
-  setJoint(23, -0.91);  //r_ankle_pitch
-  setJoint(24, 0.91); //l_ankle_pitch
-
-  setJoint(25, -0.09);  //r_ankle_roll
-  setJoint(26, 0.09); //l_ankle_roll
-
+  //LEGS stay as they are
 }
 
 void ThorMangFallingController::fallPoseRight()
 {
-  //ARMS
+    //ARMS
+    setJoint(1, 0.79); //r_shoulder_pitch
+    setJoint(2, 0.2123); //l_shoulder_pitch
 
-  setJoint(1, -0.79); //r_shoulder_pitch
-  setJoint(2, 0.79); //l_shoulder_pitch
+    setJoint(3, -0.2691); //r_shoulder_roll
+    setJoint(4, -0.0842); //l_shoulder_roll
 
-  setJoint(3, 0.44); //r_shoulder_roll
-  setJoint(4, -0.44); //l_shoulder_roll
+    setJoint(5, 0.0); //r_shoulder_yaw
+    setJoint(6, 0.0); //l_shoulder_yaw
 
-  setJoint(5, 0.57); //r_shoulder_yaw
-  setJoint(6, -0.57); //l_shoulder_yaw
+    setJoint(7, -1.5174); //r_elbow
+    setJoint(8, 1.3463); //l_elbow
 
-  setJoint(7, 2.49); //r_elbow
-  setJoint(8, -2.49); //l_elbow
+    setJoint(9, 1.55); //r_wrist_yaw_1
+    setJoint(10, -1.478); //l_wrist_yaw_1
 
-  setJoint(9, -1.55); //r_wrist_yaw_1
-  setJoint(10, 1.55); //l_wrist_yaw_1
+    setJoint(11, -0.0163); //r_wrist_roll
+    setJoint(12, 0.8534); //l_wrist_roll
 
-  setJoint(11, 0.0); //r_wrist_roll
-  setJoint(12, 0.0); //l_wrist_roll
+    setJoint(13, 0.0); //r_wrist_yaw_2
+    setJoint(14, 0.0283); //l_wrist_yaw_2
 
-  setJoint(13, 0.0); //r_wrist_yaw_2
-  setJoint(14, 0.0); //l_wrist_yaw_2
+    // Torso
+    setJoint(27, 0); // waist pan
+    setJoint(28, 0); // waist tilt
 
-  //LEGS
-
-  setJoint(15, -0.01); //r_hip_yaw
-  setJoint(16, 0.01); //l_hip_yaw
-
-  setJoint(17, 0.09); //r_hip_roll
-  setJoint(18, -0.09); //l_hip_roll
-
-  setJoint(19, 1.57); //r_hip_pitch
-  setJoint(20, -1.57); //l_hip_pitch
-
-  setJoint(21, -2.49); //r_knee
-  setJoint(22, 2.49); //l_knee
-
-  setJoint(23, -0.91);  //r_ankle_pitch
-  setJoint(24, 0.91); //l_ankle_pitch
-
-  setJoint(25, -0.09);  //r_ankle_roll
-  setJoint(26, 0.09); //l_ankle_roll
+    //LEGS stay as they are
 }
 
 bool ThorMangFallingController::checkTorqueOff()
