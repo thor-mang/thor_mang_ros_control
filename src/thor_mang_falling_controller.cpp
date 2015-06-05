@@ -365,7 +365,7 @@ void ThorMangFallingController::fallPoseLeft()
   setJoint(10, 1.478); //l_wrist_yaw_1
 
   setJoint(11, 0.0163); //r_wrist_roll
-  setJoint(12, -0.8534); //l_wrist_roll
+  setJoint(12, -0.4534); //l_wrist_roll
 
   setJoint(13, 0.0); //r_wrist_yaw_2
   setJoint(14, -0.0283); //l_wrist_yaw_2
@@ -380,26 +380,26 @@ void ThorMangFallingController::fallPoseLeft()
 void ThorMangFallingController::fallPoseRight()
 {
     //ARMS
-    setJoint(1, 0.79); //r_shoulder_pitch
-    setJoint(2, 0.2123); //l_shoulder_pitch
+    setJoint(1, 0.2123); //r_shoulder_pitch
+    setJoint(2, 0.79); //l_shoulder_pitch
 
-    setJoint(3, -0.2691); //r_shoulder_roll
-    setJoint(4, -0.0842); //l_shoulder_roll
+    setJoint(3, -0.0842); //r_shoulder_roll
+    setJoint(4, -0.2691); //l_shoulder_roll
 
     setJoint(5, 0.0); //r_shoulder_yaw
     setJoint(6, 0.0); //l_shoulder_yaw
 
-    setJoint(7, -1.5174); //r_elbow
-    setJoint(8, 1.3463); //l_elbow
+    setJoint(7, 1.3463); //r_elbow
+    setJoint(8, -1.5174); //l_elbow
 
-    setJoint(9, 1.55); //r_wrist_yaw_1
-    setJoint(10, -1.478); //l_wrist_yaw_1
+    setJoint(9, -1.478); //r_wrist_yaw_1
+    setJoint(10, 1.55); //l_wrist_yaw_1
 
-    setJoint(11, -0.0163); //r_wrist_roll
-    setJoint(12, 0.8534); //l_wrist_roll
+    setJoint(11, 0.4534); //r_wrist_roll
+    setJoint(12, -0.0163); //l_wrist_roll
 
-    setJoint(13, 0.0); //r_wrist_yaw_2
-    setJoint(14, 0.0283); //l_wrist_yaw_2
+    setJoint(13, 0.0283); //r_wrist_yaw_2
+    setJoint(14, 0.0); //l_wrist_yaw_2
 
     // Torso
     setJoint(27, 0); // waist pan
