@@ -163,7 +163,7 @@ void ThorMangFallingController::starting(const ros::Time& time)
 void ThorMangFallingController::stopping(const ros::Time& time)
 {
   unclaimJoints();
-  unlimitSpeed();
+  //unlimitSpeed();
   MotionManager::GetInstance()->EnableLights(false);
   Thor::MotionManager::GetInstance()->RemoveModule(this);
   fallState = Disabled;
@@ -222,7 +222,7 @@ bool ThorMangFallingController::detectAndDecide()
 
 void ThorMangFallingController::fallPose()
 {
-  limitSpeed();
+  //limitSpeed();
   claimJoints();
 
   if (fallingPose == PoseFront)
