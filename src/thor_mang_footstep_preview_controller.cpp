@@ -98,6 +98,21 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   balance_left_pitch_gain_by_ft = -0.0005;
   foot_landing_offset_gain = 1.0;
   foot_landing_detect_n = 50.0;
+  balance_x_gain_ = 12,6875;
+  balance_y_gain_ = -15,225;
+  balance_z_gain_ = 0;
+  balance_pitch_gain_ = -0,0375;
+  balance_roll_gain_ = -0,075;
+  axis_controller_gain_ = 0;
+
+  foot_roll_adjustment_ = 10;
+  foot_pitch_adjustment_ = 10;
+  cob_x_adjustment_ = 50;
+  cob_y_adjustment_ = 50;
+
+  p_gain_ = 32;
+  d_gain_ = 0;
+  i_gain_ = 0;
 
   dyn_rec_server_.reset(new FootstepPreviewConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
@@ -278,12 +293,19 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->IMU_GYRO_GAIN_RATIO = imu_gyro_gain_ratio; // 7.31*0.01;
   PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO = force_moment_distribution_ratio;//0.4;
 
-  PreviewControlWalking::GetInstance()->BALANCE_X_GAIN     = +1.0*20.30*0.625*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
-  PreviewControlWalking::GetInstance()->BALANCE_Y_GAIN     = -1.0*20.30*0.75*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
-  PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN     =    0.0*2.0*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+  PreviewControlWalking::GetInstance()->BALANCE_X_GAIN     = balance_x_gain_*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+  PreviewControlWalking::GetInstance()->BALANCE_Y_GAIN     = balance_y_gain_*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+  PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN     = balance_z_gain_*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
 
-  PreviewControlWalking::GetInstance()->BALANCE_PITCH_GAIN = -1.0*0.06*0.625*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
-  PreviewControlWalking::GetInstance()->BALANCE_ROLL_GAIN  = -1.0*0.10*0.75*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+  PreviewControlWalking::GetInstance()->BALANCE_PITCH_GAIN = balance_pitch_gain_*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+  PreviewControlWalking::GetInstance()->BALANCE_ROLL_GAIN  = balance_roll_gain_ *(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+
+//  PreviewControlWalking::GetInstance()->BALANCE_X_GAIN     = +1.0*20.30*0.625*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+//  PreviewControlWalking::GetInstance()->BALANCE_Y_GAIN     = -1.0*20.30*0.75*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+//  PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN     =    0.0*2.0*(PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+
+//  PreviewControlWalking::GetInstance()->BALANCE_PITCH_GAIN = -1.0*0.06*0.625*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
+//  PreviewControlWalking::GetInstance()->BALANCE_ROLL_GAIN  = -1.0*0.10*0.75*(1.0 - PreviewControlWalking::GetInstance()->FORCE_MOMENT_DISTRIBUTION_RATIO)*PreviewControlWalking::GetInstance()->WALK_STABILIZER_GAIN_RATIO;
 
   PreviewControlWalking::GetInstance()->BALANCE_HIP_PITCH_GAIN = balance_hip_pitch_gain;//1.0;
   PreviewControlWalking::GetInstance()->BALANCE_Z_GAIN_BY_FT = balance_z_gain_by_ft ;//0.1*0.5;
@@ -294,7 +316,7 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->BALANCE_LEFT_ROLL_GAIN_BY_FT = balance_left_roll_gain_by_ft;//0.01*0.1;
   PreviewControlWalking::GetInstance()->BALANCE_LEFT_PITCH_GAIN_BY_FT = balance_left_pitch_gain_by_ft;//-0.01*0.1*0.5;
 
-  PreviewControlWalking::GetInstance()->AXIS_CONTROLLER_GAIN = 0.0;
+  PreviewControlWalking::GetInstance()->AXIS_CONTROLLER_GAIN = axis_controller_gain_; // 0.0
 
   PreviewControlWalking::GetInstance()->BALANCE_HIP_PITCH_TIME_CONSTANT = 1.0*0.01;
   PreviewControlWalking::GetInstance()->BALANCE_Z_TIME_CONSTANT = 1.0*0.5;
@@ -313,15 +335,15 @@ void ThorMangFootstepPreviewController::initWalkingParameters()
   PreviewControlWalking::GetInstance()->SYSTEM_CONTROL_UNIT_TIME_SEC = MotionModule::TIME_UNIT / 1000.0;
   PreviewControlWalking::GetInstance()->FOOT_LANDING_DETECTION_TIME_MAX_SEC = 10.0;
 
-  PreviewControlWalking::GetInstance()->FOOT_ROLL_ADJUSTMENT_ABS_MAX_RAD = 10.0*M_PI/180;
-  PreviewControlWalking::GetInstance()->FOOT_PITCH_ADJUSTMENT_ABS_MAX_RAD = 10.0*M_PI/180;
+  PreviewControlWalking::GetInstance()->FOOT_ROLL_ADJUSTMENT_ABS_MAX_RAD = foot_roll_adjustment_*M_PI/180; // 10
+  PreviewControlWalking::GetInstance()->FOOT_PITCH_ADJUSTMENT_ABS_MAX_RAD = foot_pitch_adjustment_*M_PI/180; // 10
 
-  PreviewControlWalking::GetInstance()->COB_X_ADJUSTMENT_ABS_MAX_MM = 50;
-  PreviewControlWalking::GetInstance()->COB_Y_ADJUSTMENT_ABS_MAX_MM = 50;
+  PreviewControlWalking::GetInstance()->COB_X_ADJUSTMENT_ABS_MAX_MM = cob_x_adjustment_; // 50
+  PreviewControlWalking::GetInstance()->COB_Y_ADJUSTMENT_ABS_MAX_MM = cob_y_adjustment_; // 50
 
-  PreviewControlWalking::GetInstance()->P_GAIN = 32;
-  PreviewControlWalking::GetInstance()->I_GAIN = 0;
-  PreviewControlWalking::GetInstance()->D_GAIN = 0;
+  PreviewControlWalking::GetInstance()->P_GAIN = p_gain_; // 32
+  PreviewControlWalking::GetInstance()->I_GAIN = i_gain_; // 0
+  PreviewControlWalking::GetInstance()->D_GAIN = d_gain_; // 0
 
   //PreviewControlWalking::GetInstance()->SetRefZMPDecisionParameter(0.0, 0.0, 0.0);
 }
@@ -588,6 +610,23 @@ void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_contro
   balance_left_pitch_gain_by_ft = config.balance_left_pitch_gain_by_ft;
   foot_landing_offset_gain = config.foot_landing_offset_gain;
   foot_landing_detect_n = config.foot_landing_detect_n;
+
+  balance_x_gain_ = config.balance_x_gain;
+  balance_y_gain_ = config.balance_y_gain;
+  balance_z_gain_ = config.balance_z_gain;
+  balance_pitch_gain_ = config.balance_pitch_gain;
+  balance_roll_gain_ = config.balance_roll_gain;
+  axis_controller_gain_ = config.axis_controller_gain;
+
+  foot_roll_adjustment_ = config.foot_roll_adjustment;
+  foot_pitch_adjustment_ = config.foot_pitch_adjustment;
+  cob_x_adjustment_ = config.cob_x_adjustment;
+  cob_y_adjustment_ = config.cob_y_adjustment;
+
+  p_gain_ = config.p_gain;
+  d_gain_ = config.d_gain;
+  i_gain_ = config.i_gain;
+
 
   initWalkingParameters();
 }

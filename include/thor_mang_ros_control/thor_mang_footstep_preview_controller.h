@@ -108,6 +108,22 @@ protected:
   double foot_landing_offset_gain;
   double foot_landing_detect_n;
 
+  double balance_x_gain_;
+  double balance_y_gain_;
+  double balance_z_gain_;
+  double balance_pitch_gain_;
+  double balance_roll_gain_;
+  double axis_controller_gain_;
+
+  double foot_roll_adjustment_;
+  double foot_pitch_adjustment_;
+  double cob_x_adjustment_;
+  double cob_y_adjustment_;
+
+  double p_gain_;
+  double d_gain_;
+  double i_gain_;
+
   // action server calls
   typedef vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction> ActionServer;
   void executeStepPlanAction(ActionServer::Ptr& as);
