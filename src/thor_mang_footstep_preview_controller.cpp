@@ -251,6 +251,7 @@ bool ThorMangFootstepPreviewController::initFtDataOnGround()
 
       double scale = (ft_gnd - ft_air) / (55 * 9.81);
       PreviewControlWalking::GetInstance()->SetForceTorqueScalefactor(scale, scale);
+      ROS_INFO_STREAM("[PreviewWalking] ft_air: " << ft_air << ", ft_ground: " << ft_gnd << ", scale: " << scale);
 
     }
     else
