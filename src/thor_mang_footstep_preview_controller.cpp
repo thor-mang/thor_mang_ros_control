@@ -114,6 +114,8 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   d_gain_ = 0;
   i_gain_ = 0;
 
+  custom_imu_gain_ = 1;
+
   dyn_rec_server_.reset(new FootstepPreviewConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangFootstepPreviewController::dynRecParamCallback, this, _1, _2));
 
@@ -484,7 +486,13 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
 
 void ThorMangFootstepPreviewController::Process()
 {
+  MotionStatus::EulerAngleX *= custom_imu_gain_;
+  MotionStatus::EulerAngleY *= custom_imu_gain_;
+  MotionStatus::EulerAngleZ *= custom_imu_gain_;
   PreviewControlWalking::GetInstance()->Process();
+  MotionStatus::EulerAngleX /= custom_imu_gain_;
+  MotionStatus::EulerAngleY /= custom_imu_gain_;
+  MotionStatus::EulerAngleZ /= custom_imu_gain_;
   m_RobotInfo = PreviewControlWalking::GetInstance()->m_RobotInfo;
 
   ros::Time current_time = ros::Time::now();
@@ -626,6 +634,8 @@ void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_contro
   p_gain_ = config.p_gain;
   d_gain_ = config.d_gain;
   i_gain_ = config.i_gain;
+
+  custom_imu_gain_ = config.custom_imu_gain;
 
 
   initWalkingParameters();

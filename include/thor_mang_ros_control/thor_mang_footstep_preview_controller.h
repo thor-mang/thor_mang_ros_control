@@ -124,6 +124,8 @@ protected:
   double d_gain_;
   double i_gain_;
 
+  double custom_imu_gain_;
+
   // action server calls
   typedef vigir_footstep_planning::SimpleActionServer<vigir_footstep_planning::msgs::ExecuteStepPlanAction> ActionServer;
   void executeStepPlanAction(ActionServer::Ptr& as);
