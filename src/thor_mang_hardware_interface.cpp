@@ -873,4 +873,14 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 
   calibration_joint_offsets[36] = config.waist_lidar;
 }
+
+void ThorMangHardwareInterface::reinitializeMotion() {
+  ROS_WARN("Reinitializing motion!");
+  if(MotionManager::GetInstance()->Reinitialize()) {
+    ROS_WARN("Reinitialization successful!");
+  } else {
+    ROS_WARN("Reinitialization failed!");
+  }
+}
+
 }

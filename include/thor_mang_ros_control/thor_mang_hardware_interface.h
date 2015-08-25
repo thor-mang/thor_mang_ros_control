@@ -150,6 +150,8 @@ public:
   void limitJointSpeed(unsigned int limit);
   void unlimitJointSpeed();
 
+  void reinitializeMotion();
+
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;
   typedef boost::shared_ptr<const ThorMangHardwareInterface> ConstPtr;

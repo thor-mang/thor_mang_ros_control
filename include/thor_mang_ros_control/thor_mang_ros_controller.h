@@ -55,6 +55,7 @@ protected:
   void enableLights(const std_msgs::BoolConstPtr& enable);
   void startCalibration(const std_msgs::EmptyConstPtr& empty);
   void resetFtSensor(const std_msgs::EmptyConstPtr& empty_ptr, unsigned int sensor_id);
+  void reinitializeMotion(const std_msgs::EmptyConstPtr& empty);
 
   // subscriber
   ros::Subscriber torque_on_sub;
@@ -62,6 +63,7 @@ protected:
   ros::Subscriber enable_lights_sub;
   ros::Subscriber do_calibration_sub;
   ros::Subscriber reset_ft_sub[ThorMangHardwareInterface::MAXIMUM_NUMBER_OF_FT_SENSORS];
+  ros::Subscriber reinit_motion_sub;
 
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager;
 };

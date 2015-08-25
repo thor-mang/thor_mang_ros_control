@@ -78,9 +78,14 @@ ThorMangRosControllerNode::ThorMangRosControllerNode()
   do_calibration_sub = nh.subscribe("start_calibration", 1, &ThorMangRosControllerNode::startCalibration, this);
   torque_id_sub = nh.subscribe("torque_id_on", 1, &ThorMangRosControllerNode::setTorqueId, this);
 
+  reinit_motion_sub = nh.subscribe("reinit_motion", 1, &ThorMangRosControllerNode::reinitializeMotion, this);
+
   ROS_INFO("Initialization of ros controller completed!");
 }
 
+void ThorMangRosControllerNode::reinitializeMotion(const std_msgs::EmptyConstPtr &empty) {
+  ThorMangHardwareInterface::Instance()->reinitializeMotion();
+}
 
 void ThorMangRosControllerNode::setTorqueOn(const std_msgs::BoolConstPtr& enable)
 {
