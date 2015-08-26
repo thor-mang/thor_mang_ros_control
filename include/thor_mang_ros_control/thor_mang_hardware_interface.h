@@ -49,6 +49,8 @@
 #include <hardware_interface/robot_hw.h>
 #include <thor_mang_ros_control/thor_mang_footstep_interface.h>
 
+#include <sensor_msgs/JointState.h>
+
 // FT tools lib
 #include <vigir_force_torque_compensation_lib/compensation.h>
 
@@ -144,6 +146,11 @@ public:
   void startCalibration();
 
   void publishJointCmds();
+
+  void limitJointSpeed(unsigned int limit);
+  void unlimitJointSpeed();
+
+  void reinitializeMotion();
 
   // typedefs
   typedef boost::shared_ptr<ThorMangHardwareInterface> Ptr;

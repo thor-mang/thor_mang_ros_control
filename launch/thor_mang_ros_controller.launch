@@ -26,7 +26,8 @@
 
     <node name="walking_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
       args="--stopped step_controller
-	    step_manipulate_controller"/>
+	    step_manipulate_controller
+      falling_controller"/>
 
     <!-- Load trajectory controllers -->
     <include file="$(find thor_mang_ros_control)/launch/load_trajectory_controllers.launch">

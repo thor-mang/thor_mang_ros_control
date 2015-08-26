@@ -251,8 +251,8 @@ void ThorMangHardwareInterface::Initialize()
   state_estimator.setRobotTransforms(robot_transforms_ptr);
   state_estimator.init(ros::NodeHandle("state_estimator"));
 
-  ros::NodeHandle joint_cmds_nh;
-  joint_cmds_pub_ = joint_cmds_nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
+  ros::NodeHandle nh;
+  joint_cmds_pub_ = nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
 }
 
 void ThorMangHardwareInterface::Process()
@@ -423,17 +423,31 @@ JointData* ThorMangHardwareInterface::getJoint(int id)
   return NULL;
 }
 
-bool ThorMangHardwareInterface::goReadyPose()
-{
-  ROS_WARN("Going to ready pose!");
+void ThorMangHardwareInterface::limitJointSpeed(unsigned int limit) {
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
-    setJointVelocity(joint_index, 2000);
+    setJointVelocity(joint_index, limit);
     setJointAcceleration(joint_index, 4);
 
     usleep(1000);
   }
+}
+
+void ThorMangHardwareInterface::unlimitJointSpeed() {
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    setJointVelocity(joint_index, 0); // remove limits
+    setJointAcceleration(joint_index, 0);
+
+    usleep(1000);
+  }
+}
+
+bool ThorMangHardwareInterface::goReadyPose()
+{
+  ROS_WARN("Going to ready pose!");
+  limitJointSpeed(2000);
 
   // compute trajectory
   // ROS_INFO("Compute trajectory to initial pose.");
@@ -599,7 +613,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 21)
       setJointPosition(joint_index, outValue[3]);
     else if (id == 23)
-      setJointPosition(joint_index, outValue[4]);
+      setJointPosition(joint_index, outValue[4] + 6000);
     else if (id == 25)
       setJointPosition(joint_index, outValue[5]);
 
@@ -612,7 +626,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     else if (id == 22)
       setJointPosition(joint_index, outValue[9]);
     else if (id == 24)
-      setJointPosition(joint_index, outValue[10]);
+      setJointPosition(joint_index, outValue[10] - 6000);
     else if (id == 26)
       setJointPosition(joint_index, outValue[11]);
 
@@ -624,13 +638,7 @@ bool ThorMangHardwareInterface::goReadyPose()
   usleep(5000000); // 5
 
   // speed up servos again
-  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
-  {
-    setJointVelocity(joint_index, 0); // remove limits
-    setJointAcceleration(joint_index, 0);
-
-    usleep(1000);
-  }
+  unlimitJointSpeed();
 
   return true;
 }
@@ -891,4 +899,14 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 
   calibration_joint_offsets[36] = config.waist_lidar;
 }
+
+void ThorMangHardwareInterface::reinitializeMotion() {
+  ROS_WARN("Reinitializing motion!");
+  if(MotionManager::GetInstance()->Reinitialize()) {
+    ROS_WARN("Reinitialization successful!");
+  } else {
+    ROS_WARN("Reinitialization failed!");
+  }
+}
+
 }

@@ -3,15 +3,14 @@
 
 #include "ros/ros.h"
 
+#include <geometry_msgs/Vector3Stamped.h>
+
 // ros control
 #include <controller_interface/controller.h>
 #include <pluginlib/class_list_macros.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/imu_sensor_interface.h>
 #include <motion/motionmodule.h>
-
-// THOR-OP includes
-#include <framework/Thor.h>
 
 //Mode switcher action client
 #include <actionlib/client/simple_action_client.h>
@@ -69,25 +68,32 @@ protected:
     void fallPoseLeft();
     void fallPoseRight();
     void limitSpeed();
+    void unlimitSpeed();
     ros::WallTime testing_fall_timer;
 
 private:
     void initJoints();
     void claimJoints();
+    void unclaimJoints();
     void setJointsToPose();
+
+    ros::Publisher imu_rpy_pub;
 
     double fallDetectionAngleThreshold;
     double fallRelaxAngleThreshold;
+    double rollOffset;
+    double pitchOffset;
 
     int torqueTestCounter;
     bool lightOn;
+    int vel_goal;
 
-    double fallPoseTime;
+    ros::NodeHandle nh_;
 
     std::map<unsigned int, unsigned int> servo_id_mapping;
 
+    int stateTransitionCounter;
     State fallState;
-
     FallingPose fallingPose;
 
     std::string control_mode_switch_name;
@@ -98,7 +104,6 @@ private:
     void modeSwitchDoneCallback(const actionlib::SimpleClientGoalState& state,  const vigir_humanoid_control_msgs::ChangeControlModeResultConstPtr& result);
     void modeSwitchActiveCallback();
     void modeSwitchFeedbackCallback(const vigir_humanoid_control_msgs::ChangeControlModeFeedbackConstPtr &feedback);
-
 };
 
 }

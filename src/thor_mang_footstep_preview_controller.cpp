@@ -77,6 +77,8 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
 {
   PreviewControlWalking::GetInstance()->Initialize();
 
+  offset_sub_ = nh.subscribe<std_msgs::Float64MultiArray>("pitch_offset", 1, &ThorMangFootstepPreviewController::offsetCb, this);
+  offset_ack_pub_ = nh.advertise<std_msgs::Float64MultiArray>("current_pitch_offset", 1);
   // Load params
   std::string execute_step_plan_topic;
   nh.param("execute_step_plan_topic", execute_step_plan_topic, std::string("execute_step_plan"));
@@ -103,7 +105,7 @@ bool ThorMangFootstepPreviewController::init(hardware_interface::PositionJointIn
   // Pre-claim all joints needed by robotis
   for (unsigned int id = 1; id < joint_count+1; id++)
   {
-    if((id >= 15 && id <=26) || claim_arms && (id == 1 || id ==2 || id == 7|| id == 8))
+    if((id >= 15 && id <=26) || claim_arms && (id == 1 || id == 2 || id == 7|| id == 8))
     {
       try
       {
@@ -242,6 +244,7 @@ bool ThorMangFootstepPreviewController::initFtDataOnGround()
 
 void ThorMangFootstepPreviewController::initWalkingParameters()
 {
+  publishCurrentPitchOffset();
   // ROS_INFO("[PreviewWalking] Estimating system control time: %f", system_control_unit_time_sec);
 
   // ROS_INFO_STREAM("[PreviewWalking] Setting hip pitch offset to: " << hip_pitch_offset);
@@ -355,8 +358,11 @@ void ThorMangFootstepPreviewController::update(const ros::Time& /*time*/, const 
     int remaining_unreserved_steps = PreviewControlWalking::GetInstance()->GetNumofRemainingUnreservedStepData();
 
     // check of queue was cleared -> execute last step
-    if (steps.empty() && remaining_unreserved_steps > 0)
-      remaining_unreserved_steps -= 1;
+    if (steps.empty())
+      remaining_unreserved_steps -= 2;
+
+    if (remaining_unreserved_steps < 0)
+      remaining_unreserved_steps = 0;
 
     for(int i = 0; i < remaining_unreserved_steps; i++)
       PreviewControlWalking::GetInstance()->EraseLastStepData();
@@ -566,6 +572,25 @@ void ThorMangFootstepPreviewController::dynRecParamCallback(thor_mang_ros_contro
   foot_landing_detect_n = config.foot_landing_detect_n;
 
   initWalkingParameters();
+}
+
+void ThorMangFootstepPreviewController::publishCurrentPitchOffset() {
+  std_msgs::Float64MultiArray array;
+  array.data.resize(2);
+  array.data[0] = hip_pitch_offset;
+  array.data[1] = ankle_pitch_offset;
+  offset_ack_pub_.publish(array);
+}
+
+void ThorMangFootstepPreviewController::offsetCb(const std_msgs::Float64MultiArrayConstPtr& array_ptr) {
+  if (array_ptr->data.size() != 2) {
+    ROS_ERROR_STREAM("[PreviewWalking] Received pitch offset array of size " << array_ptr->data.size() << ". Expected size 2.");
+    return;
+  }
+  hip_pitch_offset = array_ptr->data[0];
+  ankle_pitch_offset = array_ptr->data[1];
+  initWalkingParameters();
+  ROS_INFO_STREAM("Changed [hip | ankle] pitch offset to [" << hip_pitch_offset << " | " << ankle_pitch_offset << "]");
 }
 }
 
