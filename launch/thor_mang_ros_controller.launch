@@ -14,6 +14,7 @@
     <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_controllers.yaml" command="load" />
     <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_position_controllers.yaml" command="load" />
     <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_trajectory_controllers.yaml" command="load" />
+    <rosparam file="$(find thor_mang_ros_control)/config/thor_mang_velocity_controllers.yaml" command="load" />
 
     <!-- Load ft-sensor compensation data -->
     <rosparam file="$(find vigir_force_torque_compensation_lib)/config/thor_vt_data.yaml" command="load" />
@@ -22,7 +23,9 @@
       args="joint_state_controller
             imu_sensor_controller
             force_torque_sensor_controller
-            waist_lidar_controller"/>
+	    head_lidar_controller
+            waist_lidar_controller
+	    "/>
 
     <node name="walking_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
       args="--stopped step_controller
