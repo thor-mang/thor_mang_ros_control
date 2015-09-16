@@ -199,7 +199,12 @@ void ThorMangHardwareInterface::Initialize()
   std::set_difference(all_ids.begin(), all_ids.end(), found_ids.begin(), found_ids.end(), std::inserter(missing_ids, missing_ids.begin()));
   std::stringstream error_stream;
   for (std::set<unsigned int>::const_iterator it = missing_ids.begin(); it != missing_ids.end(); it++) {
+
     unsigned int id_index = *it -1;
+
+    if ((jointUIDs[id_index] == "r_hand_middle_finger") || (jointUIDs[id_index] == "l_hand_middle_finger"))
+      continue;
+
     error_stream << jointUIDs[id_index] << ",";
     // connect and register the joint state interface
     hardware_interface::JointStateHandle joint_state_handle(jointUIDs[id_index], &pos[id_index], &vel[id_index], &eff[id_index]);
