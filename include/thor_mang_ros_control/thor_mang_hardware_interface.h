@@ -195,7 +195,7 @@ protected:
   double calibration_joint_offsets[MotionStatus::MAXIMUM_NUMBER_OF_JOINTS-1];
 
   // parameters
-  double joint_state_intervall;
+  double joint_state_interval;
   ros::Time last_joint_state_read;
 
   // mutex

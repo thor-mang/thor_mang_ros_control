@@ -99,7 +99,7 @@ ThorMangHardwareInterface::Ptr ThorMangHardwareInterface::singelton = ThorMangHa
 ThorMangHardwareInterface::ThorMangHardwareInterface()
   : MotionModule()
   , hardware_interface::RobotHW()
-  , joint_state_intervall(20.0)
+  , joint_state_interval(20.0)
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(true)
 {
@@ -339,7 +339,7 @@ void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
   state_estimator.update();
 }
 
-// not real-time save
+// not hard real-time safe
 void ThorMangHardwareInterface::publishJointCmds() {
   sensor_msgs::JointState joint_cmds;
   joint_cmds.header.stamp = ros::Time::now();
@@ -381,7 +381,7 @@ void ThorMangHardwareInterface::write(ros::Time time, ros::Duration period)
 
 void ThorMangHardwareInterface::setJointStateRate(double joint_state_rate)
 {
-  this->joint_state_intervall = 1.0/joint_state_rate;
+  this->joint_state_interval = 1.0/joint_state_rate;
 }
 
 void ThorMangHardwareInterface::setTorqueOn(int id, bool enable)
