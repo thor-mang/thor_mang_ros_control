@@ -266,9 +266,10 @@ void ThorMangHardwareInterface::Process()
 {
     toc();
     for (int i = 0; i < m_RobotInfo.size(); i++) {
-        if(m_RobotInfo[i].m_ID == 21){ // r_knee
+//        if(m_RobotInfo[i].m_ID == 21){ // r_knee
+            fprintf(stderr, "PGain: %d", m_RobotInfo[i].m_Pgain);
             m_RobotInfo[i].m_Pgain = 2;
-        }
+//        }
     }
   //  boost::mutex::scoped_lock lock(hardware_mutex);
   //  m_RobotInfo[m_Pan_joint_index].m_Value = m_RobotInfo[m_Pan_joint_index].m_DXLInfo->Rad2Value(cmd[m_Pan_joint_index]);
