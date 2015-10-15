@@ -1,6 +1,7 @@
 #include <thor_mang_ros_control/thor_mang_hardware_interface.h>
 
 #include <algorithm>
+#include <thor_mang_ros_control/tic_toc.h>
 
 namespace Thor
 {
@@ -103,6 +104,7 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   , last_joint_state_read(ros::Time::now())
   , has_foot_ft_offsets_in_air(true)
 {
+    tic();
   uID = const_cast<char*>("thor_mang_hardware_interface");
 
   for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_FT_SENSORS; i++)
@@ -262,10 +264,17 @@ void ThorMangHardwareInterface::Initialize()
 
 void ThorMangHardwareInterface::Process()
 {
+    toc();
+    for (int i = 0; i < m_RobotInfo.size(); i++) {
+        if(m_RobotInfo[i].m_ID == 21){ // r_knee
+            m_RobotInfo[i].m_Pgain = 2;
+        }
+    }
   //  boost::mutex::scoped_lock lock(hardware_mutex);
   //  m_RobotInfo[m_Pan_joint_index].m_Value = m_RobotInfo[m_Pan_joint_index].m_DXLInfo->Rad2Value(cmd[m_Pan_joint_index]);
   //  m_RobotInfo[m_Tilt_joint_index].m_Value = m_RobotInfo[m_Tilt_joint_index].m_DXLInfo->Rad2Value(cmd[m_Tilt_joint_index]);
   //  m_RobotInfo[m_Tilt_joint_index].m_Pgain = 8;
+    tic();
 }
 
 void ThorMangHardwareInterface::read(ros::Time time, ros::Duration period)
