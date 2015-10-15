@@ -117,25 +117,23 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Specify additional locations of header files
-#set(HEADERS
-#    include/${PROJECT_NAME}/thor_mang_footstep_preview_controller.h
-#    include/${PROJECT_NAME}/thor_mang_footstep_recursive_controller.h
-#    include/${PROJECT_NAME}/thor_mang_footstep_interface.h
-#    include/${PROJECT_NAME}/thor_mang_hardware_interface.h
-#    include/${PROJECT_NAME}/thor_mang_ros_controller.h
-#    include/${PROJECT_NAME}/thor_mang_falling_controller.h
-#)
+set(HEADERS
+    include/${PROJECT_NAME}/thor_mang_footstep_preview_controller.h
+    include/${PROJECT_NAME}/thor_mang_footstep_recursive_controller.h
+    include/${PROJECT_NAME}/thor_mang_footstep_interface.h
+    include/${PROJECT_NAME}/thor_mang_hardware_interface.h
+    include/${PROJECT_NAME}/thor_mang_ros_controller.h
+    include/${PROJECT_NAME}/thor_mang_falling_controller.h
+)
 
-#set(SOURCES
-#    src/thor_mang_footstep_preview_controller.cpp
-#    src/thor_mang_footstep_recursive_controller.cpp
-#    src/thor_mang_footstep_interface.cpp
-#    src/thor_mang_hardware_interface.cpp
-#    src/thor_mang_ros_controller.cpp
-#    src/thor_mang_falling_controller.cpp
-#)
-file(GLOB_RECURSE SOURCES . src/*.cpp)
-file(GLOB_RECURSE HEADERS . include/${PROJECT_NAME}/*.h)
+set(SOURCES
+    src/thor_mang_footstep_preview_controller.cpp
+    src/thor_mang_footstep_recursive_controller.cpp
+    src/thor_mang_footstep_interface.cpp
+    src/thor_mang_hardware_interface.cpp
+    src/thor_mang_ros_controller.cpp
+    src/thor_mang_falling_controller.cpp
+)
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
