@@ -520,7 +520,7 @@ bool ThorMangHardwareInterface::goReadyPose()
     int id = m_RobotInfo[joint_index].m_ID;
 
     if (id >= 15 && id <= 26)
-      setVelocityGain(joint_index, 0);
+      setVelocityIGain(joint_index, 0);
 
     usleep(1000);
   }
@@ -666,9 +666,18 @@ void ThorMangHardwareInterface::setJointAcceleration(unsigned int joint_index, i
   MotionManager::GetInstance()->WriteGoalAcceleration(MotionStatus::m_CurrentJoints[joint_index], value);
 }
 
-void ThorMangHardwareInterface::setVelocityGain(unsigned int joint_index, int value)
+void ThorMangHardwareInterface::setPositionPGain(unsigned int joint_index, int value) {
+  m_RobotInfo[joint_index].m_Pgain = value;
+}
+
+void ThorMangHardwareInterface::setVelocityPGain(unsigned int joint_index, int value)
 {
-  MotionManager::GetInstance()->WriteVelocityGain(MotionStatus::m_CurrentJoints[joint_index], value);
+  MotionManager::GetInstance()->WriteVelocityPGain(MotionStatus::m_CurrentJoints[joint_index], value);
+}
+
+void ThorMangHardwareInterface::setVelocityIGain(unsigned int joint_index, int value)
+{
+  MotionManager::GetInstance()->WriteVelocityIGain(MotionStatus::m_CurrentJoints[joint_index], value);
 }
 
 void ThorMangHardwareInterface::initINS()
