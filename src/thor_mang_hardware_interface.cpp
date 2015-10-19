@@ -673,6 +673,9 @@ void ThorMangHardwareInterface::setJointAcceleration(unsigned int joint_index, i
 
 void ThorMangHardwareInterface::setPositionPGain(unsigned int joint_index, int value) {
   m_RobotInfo[joint_index].m_Pgain = value;
+
+  // actually write gain to servo
+  MotionManager::GetInstance()->WriteGoalPosition(MotionStatus::m_CurrentJoints[joint_index]);
 }
 
 void ThorMangHardwareInterface::setVelocityPGain(unsigned int joint_index, int value)
@@ -920,6 +923,7 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 }
 
 void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level){
+    // get joint id from level
     if(level == 0){
         ROS_ERROR("[HardwareInterface] Could not set joint gains because level was 0.");
         return;
@@ -931,15 +935,17 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         index++;
     }
 
-    if(index > 29){
-        ROS_ERROR("[HardwareInterface] Could not set joint gains.");
+    int joint_id = index+1;
+    if(joint_id > 30)
+    {
+        ROS_ERROR("[HardwareInterface] Could not set joint gains for id %d.", joint_id);
         return;
     }
 
-    int joint_id = index+1;
-    ROS_INFO("joint_idx = %d, index = %d", joint_id, index);
+
     ROS_INFO("[HardwareInterface] Setting gains for joint: %s", jointUIDs[index].c_str());
 
+    // get joint description for id
     const std::vector<thor_mang_ros_control::ServoGainsConfig::AbstractParamDescriptionConstPtr > param_descriptions =  config.__getParamDescriptions__();
 
     int first_param_idx = -1;
@@ -952,27 +958,35 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
 
     if ( first_param_idx == -1 ) {
         ROS_ERROR("[HardwareInterface] Could not find joint parameter. Could not set joint gains.");
+        return;
     }
 
-    boost::any pos_p_gain = -1;
-    param_descriptions[first_param_idx]->getValue(config, pos_p_gain);
-    boost::any vel_p_gain = -1;
-    param_descriptions[first_param_idx+1]->getValue(config, vel_p_gain);
-    boost::any vel_i_gain = -1;
-    param_descriptions[first_param_idx+2]->getValue(config, vel_i_gain);
+    // get gains from description
+    boost::any boost_pos_p_gain = -1;
+    param_descriptions[first_param_idx]->getValue(config, boost_pos_p_gain);
+    int pos_p_gain = *boost::any_cast<int>(&boost_pos_p_gain);
 
-    ROS_INFO("[HardwareInterface]: New position p-gain = %d", *boost::any_cast<int>(&pos_p_gain));
-    ROS_INFO("[HardwareInterface]: New velocity p-gain = %d", *boost::any_cast<int>(&vel_p_gain));
-    ROS_INFO("[HardwareInterface]: New velocity i-gain = %d", *boost::any_cast<int>(&vel_i_gain));
+    boost::any boost_vel_p_gain = -1;
+    param_descriptions[first_param_idx+1]->getValue(config, boost_vel_p_gain);
+    int vel_p_gain = *boost::any_cast<int>(&boost_vel_p_gain);
 
+    boost::any boost_vel_i_gain = -1;
+    param_descriptions[first_param_idx+2]->getValue(config, boost_vel_i_gain);
+    int vel_i_gain = *boost::any_cast<int>(&boost_vel_i_gain);
 
+    ROS_INFO("[HardwareInterface]: New position p-gain = %d", pos_p_gain);
+    ROS_INFO("[HardwareInterface]: New velocity p-gain = %d", vel_p_gain);
+    ROS_INFO("[HardwareInterface]: New velocity i-gain = %d", vel_i_gain);
 
+    if ( pos_p_gain < 0 || vel_p_gain < 0 || vel_i_gain < 0) {
+        ROS_ERROR("[HardwareInterface] Error on retrieving gain from message. Could not set joint gains.");
+        return;
+    }
 
-
-    //setPositionPGain(joint_id, config.);
-
-
-
+    // set gains
+    setVelocityPGain(joint_id, vel_p_gain);
+    setVelocityIGain(joint_id, vel_i_gain);
+    setPositionPGain(joint_id, pos_p_gain);
 }
 
 void ThorMangHardwareInterface::reinitializeMotion() {
