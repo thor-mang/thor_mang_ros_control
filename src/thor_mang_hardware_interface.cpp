@@ -935,12 +935,6 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 }
 
 void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level){
-    // get joint id from level
-    if(level == 0){
-        ROS_ERROR("[HardwareInterface] Could not set joint gains because level was 0.");
-        return;
-    }
-
     int index = 0;
     while(level > 0){
         if ( level & 1 == 0) {
@@ -953,7 +947,7 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         if(joint_id > 30)
         {
             ROS_ERROR("[HardwareInterface] Could not set joint gains for id %d.", joint_id);
-            return;
+            continue;
         }
 
 
@@ -972,7 +966,7 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
 
         if ( first_param_idx == -1 ) {
             ROS_ERROR("[HardwareInterface] Could not find joint parameter. Could not set joint gains.");
-            return;
+            continue;
         }
 
         // get gains from description
@@ -992,11 +986,16 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
 
         if ( pos_p_gain < 0 || vel_p_gain < 0 || vel_i_gain < 0) {
             ROS_ERROR("[HardwareInterface] Error on retrieving gain from message. Could not set joint gains.");
-            return;
+            continue;
         }
 
         // set gains
         int joint_index = getJointIndex(joint_id);
+        if ( joint_index == -1 ) {
+            ROS_ERROR("[HardwareInterface]: Received invalid joint_index for joint_id = %d", joint_id);
+            continue;
+        }
+
         setVelocityPGain(joint_index, vel_p_gain);
         setVelocityIGain(joint_index, vel_i_gain);
         setPositionPGain(joint_index, pos_p_gain);
