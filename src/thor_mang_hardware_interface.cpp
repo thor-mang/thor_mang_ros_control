@@ -938,11 +938,18 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
     for (int joint_id = 1; joint_id <= 30; joint_id++){
         int index = joint_id - 1;
 
-        if ( (level >> index) & 1 == 0) {
+        if ( !((level >> index) & 1)) {
             continue;
         }
 
         ROS_INFO("[HardwareInterface] Setting gains for joint: %s", jointUIDs[index].c_str());
+
+        int joint_index = getJointIndex(joint_id);
+        if ( joint_index == -1 ) {
+            ROS_ERROR("[HardwareInterface]: Received invalid joint_index for joint_id = %d", joint_id);
+            continue;
+        }
+
 
         // get joint description for id
         const std::vector<thor_mang_ros_control::ServoGainsConfig::AbstractParamDescriptionConstPtr > param_descriptions =  config.__getParamDescriptions__();
@@ -981,12 +988,6 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         }
 
         // set gains
-        int joint_index = getJointIndex(joint_id);
-        if ( joint_index == -1 ) {
-            ROS_ERROR("[HardwareInterface]: Received invalid joint_index for joint_id = %d", joint_id);
-            continue;
-        }
-
         setVelocityPGain(joint_index, vel_p_gain);
         setVelocityIGain(joint_index, vel_i_gain);
         setPositionPGain(joint_index, pos_p_gain);
