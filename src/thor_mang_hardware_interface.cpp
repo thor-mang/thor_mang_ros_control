@@ -935,21 +935,12 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 }
 
 void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level){
-    int index = 0;
-    while(level > 0){
-        if ( level & 1 == 0) {
-            index++;
-            level >>= 1;
+    for (int joint_id = 1; joint_id <= 30; joint_id++){
+        int index = joint_id - 1;
+
+        if ( (level >> index) & 1 == 0) {
             continue;
         }
-
-        int joint_id = index+1;
-        if(joint_id > 30)
-        {
-            ROS_ERROR("[HardwareInterface] Could not set joint gains for id %d.", joint_id);
-            continue;
-        }
-
 
         ROS_INFO("[HardwareInterface] Setting gains for joint: %s", jointUIDs[index].c_str());
 
@@ -999,9 +990,6 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         setVelocityPGain(joint_index, vel_p_gain);
         setVelocityIGain(joint_index, vel_i_gain);
         setPositionPGain(joint_index, pos_p_gain);
-
-        index++;
-        level >>= 1;
     }
 }
 
