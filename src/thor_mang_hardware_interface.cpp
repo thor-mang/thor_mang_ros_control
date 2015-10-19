@@ -924,17 +924,46 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         ROS_ERROR("[HardwareInterface] Could not set joint gains because level was 0.");
         return;
     }
-    int index = 0;
 
+    int joint_id = 0;
     while(level > 1){
         level >>= 1;
-        index++;
+        joint_id++;
     }
 
-    if(index > 29){
+    if(joint_id > 29){
         ROS_ERROR("[HardwareInterface] Could not set joint gains.");
         return;
     }
+
+    int index = joint_id-1;
+    ROS_INFO("[HardwareInterface] Setting gains for joint: %s", jointUIDs[index].c_str());
+
+    const std::vector<thor_mang_ros_control::ServoGainsConfig::AbstractParamDescriptionConstPtr > param_descriptions =  config.__getParamDescriptions__();
+
+    int first_param_idx = -1;
+    for ( int i = 0; i < param_descriptions.size(); i++ ) {
+        if ( param_descriptions[i]->name.find( jointUIDs[index]) == 0) {
+            first_param_idx = i;
+            break;
+        }
+    }
+
+    if ( first_param_idx == -1 ) {
+        ROS_ERROR("[HardwareInterface] Could not find joint parameter. Could not set joint gains.");
+    }
+
+    std::string pos_p_gain_name = param_descriptions[first_param_idx]->name;
+    std::string vel_p_gain_name = param_descriptions[first_param_idx+1]->name;
+    std::string vel_i_gain_name = param_descriptions[first_param_idx+2]->name;
+
+    ROS_INFO("[HardwareInterface: Received gains for %s, %s and %s", pos_p_gain_name.c_str(), vel_p_gain_name.c_str(), vel_i_gain_name.c_str());
+
+
+
+
+
+    //setPositionPGain(joint_id, config.);
 
 
 
