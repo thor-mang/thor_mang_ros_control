@@ -1,6 +1,7 @@
 #include <thor_mang_ros_control/thor_mang_hardware_interface.h>
 
 #include <algorithm>
+#include <cmath>
 
 namespace Thor
 {
@@ -919,7 +920,24 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
 }
 
 void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level){
-    ROS_WARN("changed gains config for level %d", level);
+    if(level == 0){
+        ROS_ERROR("[HardwareInterface] Could not set joint gains because level was 0.");
+        return;
+    }
+    int index = 0;
+
+    while(level > 1){
+        level >>= 1;
+        index++;
+    }
+
+    if(index > 29){
+        ROS_ERROR("[HardwareInterface] Could not set joint gains.");
+        return;
+    }
+
+
+
 }
 
 void ThorMangHardwareInterface::reinitializeMotion() {
@@ -932,3 +950,4 @@ void ThorMangHardwareInterface::reinitializeMotion() {
 }
 
 }
+
