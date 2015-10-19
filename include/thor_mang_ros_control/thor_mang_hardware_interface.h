@@ -62,6 +62,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <thor_mang_ros_control/HardwareInterfaceConfig.h>
 
+#include <thor_mang_ros_control/ServoGainsConfig.h>
+
 #define G_ACC 9.80665
 
 
@@ -249,6 +251,10 @@ protected:
 
   typedef dynamic_reconfigure::Server<thor_mang_ros_control::HardwareInterfaceConfig> HardwareInterfaceConfigServer;
   boost::shared_ptr<HardwareInterfaceConfigServer> dyn_rec_server_;
+
+  void dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level);
+  typedef dynamic_reconfigure::Server<thor_mang_ros_control::ServoGainsConfig> ServoGainsConfigServer;
+  boost::shared_ptr<ServoGainsConfigServer> dyn_rec_servo_gains_server_;
 
   ros::Publisher joint_cmds_pub_;
 };

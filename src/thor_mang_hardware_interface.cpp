@@ -115,6 +115,10 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   ros::NodeHandle nh("joint_offset_calibration");
   dyn_rec_server_.reset(new HardwareInterfaceConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecParamCallback, this, _1, _2));
+
+  ros::NodeHandle nh_servo_gains("servo_gains_configuration");
+  dyn_rec_servo_gains_server_.reset(new ServoGainsConfigServer(nh_servo_gains));
+  dyn_rec_servo_gains_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecServoGainsConfigCallback, this, _1, _2));
 }
 
 ThorMangHardwareInterface::ThorMangHardwareInterface(ThorMangHardwareInterface const&)
@@ -912,6 +916,10 @@ void ThorMangHardwareInterface::dynRecParamCallback(thor_mang_ros_control::Hardw
   calibration_joint_offsets[35] = config.l_hand_middle_finger;
 
   calibration_joint_offsets[36] = config.waist_lidar;
+}
+
+void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_control::ServoGainsConfig &config, uint32_t level){
+    ROS_WARN("changed gains config for level %d", level);
 }
 
 void ThorMangHardwareInterface::reinitializeMotion() {

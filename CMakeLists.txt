@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   thor_mang_footstep_planning_msgs
   robot_transforms
   biped_state_estimator
-  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -29,6 +28,7 @@ find_package(catkin REQUIRED COMPONENTS
 generate_dynamic_reconfigure_options(
   cfg/FootstepPreviewController.cfg
   cfg/HardwareInterface.cfg
+  cfg/ServoGains.cfg
 )
 # THOR-OP interface library
 include_directories(../thor_mang_libs/include)
