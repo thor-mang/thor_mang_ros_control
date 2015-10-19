@@ -116,10 +116,6 @@ ThorMangHardwareInterface::ThorMangHardwareInterface()
   ros::NodeHandle nh("joint_offset_calibration");
   dyn_rec_server_.reset(new HardwareInterfaceConfigServer(nh));
   dyn_rec_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecParamCallback, this, _1, _2));
-
-  ros::NodeHandle nh_servo_gains("servo_gains_configuration");
-  dyn_rec_servo_gains_server_.reset(new ServoGainsConfigServer(nh_servo_gains));
-  dyn_rec_servo_gains_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecServoGainsConfigCallback, this, _1, _2));
 }
 
 ThorMangHardwareInterface::ThorMangHardwareInterface(ThorMangHardwareInterface const&)
@@ -263,6 +259,10 @@ void ThorMangHardwareInterface::Initialize()
 
   ros::NodeHandle nh;
   joint_cmds_pub_ = nh.advertise<sensor_msgs::JointState>("joint_cmds", 1000);
+
+  ros::NodeHandle nh_servo_gains("servo_gains_configuration");
+  dyn_rec_servo_gains_server_.reset(new ServoGainsConfigServer(nh_servo_gains));
+  dyn_rec_servo_gains_server_->setCallback(boost::bind(&ThorMangHardwareInterface::dynRecServoGainsConfigCallback, this, _1, _2));
 }
 
 void ThorMangHardwareInterface::Process()
