@@ -433,6 +433,18 @@ JointData* ThorMangHardwareInterface::getJoint(int id)
   return NULL;
 }
 
+
+int ThorMangHardwareInterface::getJointIndex(int joint_id)
+{
+  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  {
+    if (m_RobotInfo[joint_index].m_ID == joint_id)
+      return joint_index;
+  }
+
+  return -1;
+}
+
 void ThorMangHardwareInterface::limitJointSpeed(unsigned int limit) {
   // speed down servos
   for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
@@ -984,9 +996,10 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         }
 
         // set gains
-        setVelocityPGain(joint_id, vel_p_gain);
-        setVelocityIGain(joint_id, vel_i_gain);
-        setPositionPGain(joint_id, pos_p_gain);
+        int joint_index = getJointIndex(joint_id);
+        setVelocityPGain(joint_index, vel_p_gain);
+        setVelocityIGain(joint_index, vel_i_gain);
+        setPositionPGain(joint_index, pos_p_gain);
 
         index++;
         level >>= 1;

@@ -171,6 +171,7 @@ protected:
   ThorMangHardwareInterface& operator=(ThorMangHardwareInterface const&);
 
   JointData* getJoint(int id);
+  int getJointIndex(int joint_id);
 
   // Robot bringup
   bool goReadyPose();
