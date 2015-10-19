@@ -925,18 +925,18 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
         return;
     }
 
-    int joint_id = 0;
+    int index = 0;
     while(level > 1){
         level >>= 1;
-        joint_id++;
+        index++;
     }
 
-    if(joint_id > 29){
+    if(index > 29){
         ROS_ERROR("[HardwareInterface] Could not set joint gains.");
         return;
     }
 
-    int index = joint_id-1;
+    int joint_id = index+1;
     ROS_INFO("joint_idx = %d, index = %d", joint_id, index);
     ROS_INFO("[HardwareInterface] Setting gains for joint: %s", jointUIDs[index].c_str());
 
@@ -957,9 +957,9 @@ void ThorMangHardwareInterface::dynRecServoGainsConfigCallback(thor_mang_ros_con
     boost::any pos_p_gain = -1;
     param_descriptions[first_param_idx]->getValue(config, pos_p_gain);
     boost::any vel_p_gain = -1;
-    param_descriptions[first_param_idx]->getValue(config, vel_p_gain);
+    param_descriptions[first_param_idx+1]->getValue(config, vel_p_gain);
     boost::any vel_i_gain = -1;
-    param_descriptions[first_param_idx]->getValue(config, vel_i_gain);
+    param_descriptions[first_param_idx+2]->getValue(config, vel_i_gain);
 
     ROS_INFO("[HardwareInterface]: New position p-gain = %d", *boost::any_cast<int>(&pos_p_gain));
     ROS_INFO("[HardwareInterface]: New velocity p-gain = %d", *boost::any_cast<int>(&vel_p_gain));
