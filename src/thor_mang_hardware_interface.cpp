@@ -532,7 +532,7 @@ bool ThorMangHardwareInterface::goReadyPose()
   outValue[2] -= (double)dir_output[2] * gdHipPitchOffset * 251000.0/180.0;
   outValue[8] -= (double)dir_output[8] * gdHipPitchOffset * 251000.0/180.0;
 
-  for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
+  /*for (unsigned int joint_index = 0; joint_index < m_RobotInfo.size(); joint_index++)
   {
     int id = m_RobotInfo[joint_index].m_ID;
 
@@ -540,7 +540,7 @@ bool ThorMangHardwareInterface::goReadyPose()
       setVelocityIGain(joint_index, 0);
 
     usleep(1000);
-  }
+  }*/
 
   // let's move now
   ROS_WARN("Moving to ready pose now!");
