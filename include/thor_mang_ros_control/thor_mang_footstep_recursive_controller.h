@@ -44,7 +44,7 @@
 #include <vigir_footstep_planning_lib/helper.h>
 #include <vigir_footstep_planning_msgs/footstep_planning_msgs.h>
 
-#include <thor_mang_footstep_planning_msgs/thor_mang_step_plan_msg_plugin.h>
+#include <thor_mang_footstep_planning_plugins/thor_mang_step_plan_msg_plugin.h>
 #include <thor_mang_ros_control/thor_mang_footstep_interface.h>
 
 

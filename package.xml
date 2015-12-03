@@ -53,7 +53,7 @@
   <build_depend>pluginlib</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>vigir_force_torque_compensation_lib</build_depend>
-  <build_depend>thor_mang_footstep_planning_msgs</build_depend>
+  <build_depend>thor_mang_footstep_planning_plugins</build_depend>
   <build_depend>robot_transforms</build_depend>
   <build_depend>biped_state_estimator</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
@@ -69,7 +69,7 @@
   <run_depend>pluginlib</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>vigir_force_torque_compensation_lib</run_depend>
-  <run_depend>thor_mang_footstep_planning_msgs</run_depend>
+  <run_depend>thor_mang_footstep_planning_plugins</run_depend>
   <run_depend>robot_transforms</run_depend>
   <run_depend>biped_state_estimator</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
